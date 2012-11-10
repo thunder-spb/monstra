@@ -3,6 +3,9 @@
 
 <!-- Price_upload_files -->
 <?php
+if (Notification::get('error'))
+	Alert::error(Notification::get('error'));
+
 echo (
 	Form::open(null, array('enctype' => 'multipart/form-data')).
 		Form::hidden('csrf', Security::token()).
@@ -15,7 +18,6 @@ echo (
 
 <!-- Price_path -->
 <ul class="breadcrumb">
-
 	<?php
 	$path_parts = explode ('/',$path);
 	$s = '';
@@ -29,53 +31,54 @@ echo (
 <!-- /Price_path -->
 
 <table class="table table-bordered">
-    <thead>
-    <tr>
-        <td><?php echo __('Name', 'price'); ?></td>
-        <td><?php echo __('Extension', 'price'); ?></td>
-        <td><?php echo __('Size', 'price'); ?></td>
-        <td width="30%"><?php echo __('Actions', 'price'); ?></td>
-    </tr>
-    </thead>
-    <tbody>
+	<thead>
+	<tr>
+		<td><?php echo __('Name', 'price'); ?></td>
+		<td><?php echo __('ShortCode', 'price'); ?></td>
+		<td><?php echo __('Size', 'price'); ?></td>
+		<td width="30%"><?php echo __('Actions', 'price'); ?></td>
+	</tr>
+	</thead>
+	<tbody>
 	<?php if (isset($dir_list)) foreach ($dir_list as $dir) { ?>
-    <tr>
-        <td>
-            <b><?php echo Html::anchor($dir, 'index.php?id=price&path='.$path.$dir.'/'); ?></b>
-        </td>
-        <td>
+	<tr>
+		<td>
+			<b><?php echo Html::anchor($dir, 'index.php?id=price&path='.$path.$dir.'/'); ?></b>
+		</td>
+		<td>
 
-        </td>
-        <td>
+		</td>
+		<td>
 			<?php echo Number::byteFormat(Dir::size(UPLOADS . DS . $dir)); ?>
-        </td>
-        <td>
+		</td>
+		<td>
 			<?php echo Html::anchor(__('Delete', 'price'),
 			'index.php?id=price&delete_dir='.$dir.'&path='.$path.'&token='.Security::token(),
 			array('class' => 'btn', 'onclick' => "return confirmDelete('".__('Delete directory: :dir', 'price', array(':dir' => $dir))."')"));
 			?>
-        </td>
-    </tr>
-		<?php } ?>
+		</td>
+	</tr>
+	<?php } ?>
 	<?php if (isset($files_list)) foreach ($files_list as $file) { $ext = File::ext($file); ?>
 		<?php if (in_array($ext, $allowed_types)) { ?>
-        <tr>
-            <td>
+		<tr>
+			<td>
 				<?php echo Html::anchor(File::name($file), $site_url.'public' . DS .$path.$file, array('target'=>'_blank'));?>
-            </td>
-            <td>
-				<?php echo $ext; ?>
-            </td>
-            <td>
+			</td>
+			<td>
+				{price file=<?php echo $file; ?>}
+			</td>
+			<td>
 				<?php echo Number::byteFormat(filesize($files_path. DS .$file)); ?>
-            </td>
-            <td>
+			</td>
+			<td>
 				<?php echo Html::anchor(__('Delete', 'price'),
 				'index.php?id=price&delete_file='.$file.'&path='.$path.'&token='.Security::token(),
 				array('class' => 'btn btn-actions', 'onclick' => "return confirmDelete('".__('Delete file: :file', 'price', array(':file' => $file))."')"));
 				?>
-            </td>
-        </tr>
-			<?php } } ?>
-    </tbody>
+			</td>
+		</tr>
+	<?php }
+	} ?>
+	</tbody>
 </table>

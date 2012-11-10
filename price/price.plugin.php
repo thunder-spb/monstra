@@ -15,7 +15,7 @@
 	Plugin::register( __FILE__,
 					__('Price CSV', 'price'),
 					__('Get Price from сsv file.', 'price'),
-					'0.9.0',
+					'1.0.0',
 					'KANekT',
 					'http://kanekt.ru/');
 
@@ -27,7 +27,9 @@
 	if (Session::exists('user_role') && in_array(Session::get('user_role'), array('admin', 'editor'))) {
 		// Include Admin
 		Plugin::admin('price');
-
+	}
+	if (!BACKEND){
+		Javascript::add('plugins/price/content/jquery.columnfilters.js', 'frontend', 11);
 	}
 	/**
 	 * Price Class
@@ -44,22 +46,37 @@
 			else
 				return $return;
 
-			$price_file = ROOT . DS . 'public' . DS . 'prices' . DS . $file . '.csv';
+			$price_file = ROOT . DS . 'public' . DS . 'prices' . DS . $file;
 			if (File::exists($price_file)) {
 				$handle = fopen($price_file,"r");
-				$return .= "<table>";
+				$first_str = true;
+				$return .= "<table class=\"table\" id=\"price\"><thead>";
 				while ($data = fgetcsv($handle, 1000, ";"))
 				{
 					$num = count($data);
-					$return .= "<tr>";
-					for ($c=0; $c < $num; $c++)
-					{
-						$return .= "<td>".$data[$c] . "</td>";
+					if ($first_str) {
+						$return .= "<tr>";
+						for ($c=0; $c < $num; $c++)
+						{
+							$return .= "<th>".$data[$c] . "</th>";
+						}
+						$return .= "</tr></thead><tboby>";
+						$first_str = false;
 					}
-					$return .= "</tr>";
+					else {
+						$return .= "<tr>";
+						for ($c=0; $c < $num; $c++)
+						{
+							$return .= "<td>".$data[$c] . "</td>";
+						}
+						$return .= "</tr>";
+					}
 				}
-				$return .= "</table>";
+				$return .= "</tbody></table>";
 				fclose ($handle);
+			}
+			else{
+				echo 'sdf';
 			}
 			return $return;
 		}

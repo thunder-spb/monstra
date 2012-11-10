@@ -100,14 +100,18 @@
 			if (Request::post('upload_file')) {
 
 				if (Security::check(Request::post('csrf'))) {
-
 					if ($_FILES['file']) {
 						if (in_array(File::ext($_FILES['file']['name']), $allowed_types)) {
-							move_uploaded_file($_FILES['file']['tmp_name'], $files_path.Security::safeName(basename($_FILES['file']['name'], File::ext($_FILES['file']['name'])), '-', true).'.'.File::ext($_FILES['file']['name']));
+							move_uploaded_file($_FILES['file']['tmp_name'], $files_path.Text::random('kanekt', 10).'.'.File::ext($_FILES['file']['name']));
 							Request::redirect($site_url.'admin/index.php?id=price&path='.$path);
 						}
+						else{
+							Notification::set('error', __('Error', 'price'));
+						}
 					}
-
+					else{
+						Notification::set('error', __('Error', 'price'));
+					}
 				} else { die('csrf detected!'); }
 			}
 
