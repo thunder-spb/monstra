@@ -15,13 +15,13 @@
 	Plugin::register( __FILE__,
 					__('Price CSV', 'price'),
 					__('Get Price from сsv file.', 'price'),
-					'1.0.0',
+					'1.1.0',
 					'KANekT',
 					'http://kanekt.ru/');
 
 
 	// Add new shortcode {price}
-	// Example: {price file=price}
+	// Example: {price file=price.csv}
 	Shortcode::add('price', 'Price::view');
 
 	if (Session::exists('user_role') && in_array(Session::get('user_role'), array('admin', 'editor'))) {

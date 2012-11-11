@@ -62,15 +62,6 @@
 				}
 			}
 
-			$dir_list = array();
-
-			// Get dirs
-			if (isset($_list['dirs'])) {
-				foreach ($_list['dirs'] as $dirs) {
-					if (strpos($dirs, '.') === false) $dir_list[] = $dirs;
-				}
-			}
-
 			// Delete file
 			// -------------------------------------
 			if (Request::get('id') == 'price' && Request::get('delete_file')) {
@@ -78,18 +69,7 @@
 				if (Security::check(Request::get('token'))) {
 
 					File::delete($files_path.Request::get('delete_file'));
-					Request::redirect($site_url.'admin/index.php?id=price&path='.$path);
-
-				} else { die('csrf detected!'); }
-			}
-
-			// Delete dir
-			// -------------------------------------
-			if (Request::get('id') == 'price' && Request::get('delete_dir')) {
-
-				if (Security::check(Request::get('token'))) {
-
-					Dir::delete($files_path.Request::get('delete_dir'));
+					Notification::set('success', __('Delete File', 'price'));
 					Request::redirect($site_url.'admin/index.php?id=price&path='.$path);
 
 				} else { die('csrf detected!'); }
@@ -102,7 +82,15 @@
 				if (Security::check(Request::post('csrf'))) {
 					if ($_FILES['file']) {
 						if (in_array(File::ext($_FILES['file']['name']), $allowed_types)) {
-							move_uploaded_file($_FILES['file']['tmp_name'], $files_path.Text::random('kanekt', 10).'.'.File::ext($_FILES['file']['name']));
+							if (Request::post('name')){
+								$name = Request::post('name');
+								Notification::set('success', __('Success ReLoad', 'price'));
+							}
+							else{
+								$name = Text::random('kanekt', 10).'.'.File::ext($_FILES['file']['name']);
+								Notification::set('success', __('Success UpLoad', 'price'));
+							}
+							move_uploaded_file($_FILES['file']['tmp_name'], $files_path.$name);
 							Request::redirect($site_url.'admin/index.php?id=price&path='.$path);
 						}
 						else{
@@ -114,18 +102,25 @@
 					}
 				} else { die('csrf detected!'); }
 			}
-
-			// Display view
-			View::factory('price/views/backend/index')
-				->assign('path', $path)
-				->assign('current', $current)
-				->assign('files_list', $files_list)
-				->assign('dir_list', $dir_list)
-				->assign('allowed_types', $allowed_types)
-				->assign('site_url', $site_url)
-				->assign('files_path', $files_path)
-				->display();
-
+			// Edit file
+			// -------------------------------------
+			if (Request::get('id') == 'price' && Request::get('action') == 'edit' && Request::get('uid')) {
+				// Display view
+				View::factory('price/views/backend/file')
+					->assign('name', Request::get('uid'))
+					->display();
+			}
+			else{
+				// Display view
+				View::factory('price/views/backend/index')
+					->assign('path', $path)
+					->assign('current', $current)
+					->assign('files_list', $files_list)
+					->assign('allowed_types', $allowed_types)
+					->assign('site_url', $site_url)
+					->assign('files_path', $files_path)
+					->display();
+			}
 		}
 
 

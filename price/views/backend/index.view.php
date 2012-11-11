@@ -5,6 +5,8 @@
 <?php
 if (Notification::get('error'))
 	Alert::error(Notification::get('error'));
+if (Notification::get('success'))
+	Alert::success(Notification::get('success'));
 
 echo (
 	Form::open(null, array('enctype' => 'multipart/form-data')).
@@ -72,6 +74,7 @@ echo (
 				<?php echo Number::byteFormat(filesize($files_path. DS .$file)); ?>
 			</td>
 			<td>
+				<?php echo Html::anchor(__('Edit', 'price'), 'index.php?id=price&action=edit&uid='.$file, array('class' => 'btn btn-actions')); ?>
 				<?php echo Html::anchor(__('Delete', 'price'),
 				'index.php?id=price&delete_file='.$file.'&path='.$path.'&token='.Security::token(),
 				array('class' => 'btn btn-actions', 'onclick' => "return confirmDelete('".__('Delete file: :file', 'price', array(':file' => $file))."')"));
