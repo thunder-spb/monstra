@@ -1,0 +1,85 @@
+/**
+ * Articles list
+ */
+#articles {
+
+}
+#articles .articles-fleft {
+    float:left;
+}
+#articles .articles-fright {
+    float:right;
+}
+#articles a.articles-more {
+    display:block;
+    float:right;
+    margin-bottom:10px;
+    padding:3px 10px;
+    background:rgba(160,160,160,.1);
+    border-radius:5px;
+    text-decoration:none;
+}
+#articles a.articles-more:hover {
+    background:rgba(200,200,200,.1);
+}
+#articles #articles-list{
+    overflow:hidden;
+}
+#articles .articles-item{
+    overflow:hidden;
+}
+#articles .articles-item h2{
+
+}
+#articles .articles-item .articles-content{
+    
+}
+#articles .articles-item .articles-status{
+    clear:both;
+    background:rgba(160,160,160,.1);
+    padding:3px 5px;
+    margin:10px 0 17px 0;
+    font-size:11px;
+    border-radius:3px;
+    overflow:hidden;
+    line-height:16px;
+}
+/**
+ * Paginator
+ */
+#articles #articles-paginator {
+    font-size:16px;
+    margin-top:20px;
+}
+#articles #articles-paginator strong {
+    font-weight: 700;
+}
+#articles #articles-paginator a {
+    text-decoration:underline;
+}
+#articles #articles-paginator a:hover{
+    text-decoration:underline;
+}
+#articles #articles-paginator #articles-page{
+    margin-top:3px;
+    overflow:hidden;
+}
+#articles #articles-paginator #articles-page span{
+    display:block;
+    float:left;
+    margin-right:5px;
+}
+#articles #articles-paginator #articles-page a{
+    display:block;
+    float:left;
+    margin-right:2px;
+    border-radius:3px;
+    padding:3px 5px;
+}
+#articles #articles-paginator #articles-page a:hover{
+    background:rgba(100,100,100,.1);
+}
+#articles #articles-paginator #articles-page a.current{
+    text-decoration:none;
+    background:rgba(150,150,150,.2);
+}
