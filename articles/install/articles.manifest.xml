@@ -5,7 +5,7 @@
     <plugin_priority>15</plugin_priority>
     <plugin_name>Articles</plugin_name>
     <plugin_description>Articles plugin for Monstra</plugin_description>
-    <plugin_version>1.0.0</plugin_version>
+    <plugin_version>1.1.0</plugin_version>
     <plugin_author>JINN</plugin_author>
     <plugin_author_uri>http://monstra.org</plugin_author_uri>
 </root>
