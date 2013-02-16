@@ -16,9 +16,9 @@
     Plugin::register( __FILE__,                    
                     __('News', 'news'),
                     __('News plugin for Monstra', 'news'),  
-                    '1.1.0',
-                    'JINN',                 
-                    'http://monstra.promo360.ru/',
+                    '1.3.0',
+                    'KANekT',
+                    'http://monstra.org/',
                     'news');
 
     // Load News Admin for Editor and Admin
@@ -26,7 +26,8 @@
         Plugin::admin('news');
     }
     
-    if (!BACKEND) Stylesheet::add('plugins/news/news/style.css', 'frontend', 11);
+    if (!BACKEND)
+		Stylesheet::add('plugins/news/css/style.css', 'frontend', 11);
     
     Shortcode::add('news', 'News::_shortcode');
     
@@ -45,12 +46,19 @@
             News::$meta['description'] = '';
                 
             $uri = Uri::segments();
-            
-            if(empty($uri[1]) or ($uri[1] == 'page')) {
-                News::getNews($uri);    
+
+            if(empty($uri[1]) or ($uri[1] == 'news')) {
+                News::getNews($uri);
             } elseif (intval($uri[1]) > 0 and isset($uri[2])) {
                 News::getNewsCurrent($uri);
             }
+			elseif ($uri[0] == 'news' and isset($uri[1])) {
+				$slug = $uri[1];
+				if (isset($uri[2])) {
+					$slug = $uri[2];
+				}
+				News::getNewsBySlug($slug);
+			}
         }
         
         /** 
@@ -98,8 +106,6 @@
             extract($attributes);
         
             $count = (isset($count)) ? (int)$count : 3;
-        	if(!isset($cut))
-				$cut = 0;
             if (isset($list)) {
                 if ($list == 'last') return News::last($count, 'last', false);
                 elseif ($list == 'views') return News::last($count, 'hits', false);
@@ -156,9 +162,8 @@
                 
             if($records) {
                 if($records['slug'] == $slug) {
-                
+
                     if(empty($records['title'])) $records['title'] = $records['name'];
-                    if(empty($records['h1']))    $records['h1']    = $records['name'];
                 
                     News::$meta['title'] = $records['title'];
                     News::$meta['keywords'] = $records['keywords'];
@@ -177,6 +182,31 @@
                 News::error404();
             }
         }
+
+		/**
+		 * get Current news
+		 */
+		public static function getNewsBySlug($slug){
+			$site_url = Option::get('siteurl');
+			$records = News::$news->select('[slug="'.$slug.'"]', null);
+
+			if($records) {
+					if(empty($records['title'])) $records['title'] = $records['name'];
+
+					News::$meta['title'] = $records['title'];
+					News::$meta['keywords'] = $records['keywords'];
+					News::$meta['description'] = $records['description'];
+
+					$records['hits'] = News::hits($records['id'], $records['hits']);
+
+					News::$template = View::factory('news/views/frontend/current')
+						->assign('row', $records)
+						->assign('site_url', $site_url)
+						->render();
+			} else {
+				News::error404();
+			}
+		}
         
         public static function title(){
             return News::$meta['title'];
@@ -218,14 +248,10 @@
         }
         
         public static function getContentShort($id, $short=true, $full_news='') {
-            $text = Text::toHtml(File::getContent(STORAGE . DS . 'news' . DS . $id . '.news.txt'));
-            
             if($short) {
-                $content_array = explode("{cut}", $text);
-                $content = $content_array[0];
-                if(count($content_array)>1) $content.= '<a href="'.$full_news.'" class="news-more">'.__('Read more', 'news').'</a>';
+				$content = Text::toHtml(File::getContent(STORAGE . DS . 'news' . DS . $id . '.short.news.txt'));
             } else {
-                $content = strtr($text, array('{cut}' => ''));
+                $content = Text::toHtml(File::getContent(STORAGE . DS . 'news' . DS . $id . '.news.txt'));
             }
             
             return Filter::apply('content', $content);

@@ -11,13 +11,18 @@
                 <div class="news-item">
                 
                     <h2><a href="<?php echo $news_url;?>"><?php echo $row['name'];?></a></h2>
-                    <div class="news-content"><?php echo News::getContentShort($row['id'], true, $news_url); ?></div>
+                    <div class="news-content">
+                        <a href="<?php echo $site_url.'public/uploads/news/'.$row['id'].'_o.jpg' ?>"><img alt="" style="max-width:100px; max-height:50px;" src="<?php echo $site_url.'public/uploads/news/'.$row['id'].'_t.jpg' ?>"></a>
+                        <?php echo News::getContentShort($row['id'], true, $news_url); ?></div>
                     <div class="news-status">
                         <div class="news-fleft">
                             <?php echo Date::format($row['date'], 'd.m.Y');?> / 
                             <?php echo __('Hits count', 'news');?>: <?php echo $row['hits'];?>
                         </div>
-                        <div class="news-fright">&nbsp;<?php Action::run('news_item_status', array('id' => $row['id']));?></div>
+                        <div class="news-fright">
+							<a href="<?php echo $site_url;?>news/<?php if(isset($row['parent'])) echo $row['parent'].'/'; ?><?php echo $row['slug'];?>"><?php echo __('Read more', 'news') ?></a>
+							&nbsp;<?php Action::run('news_item_status', array('id' => $row['id']));?>
+						</div>
                     </div>
                 </div><!-- /news-item-->
                 

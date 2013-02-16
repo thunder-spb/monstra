@@ -1,8 +1,11 @@
 <div id="news">
     <div class="news-item">
-        <h1><a href="<?php echo $site_url;?>news"><?php echo __('News', 'news');?></a> / <?php echo $row['h1'];?></h1>
+        <h1><?php echo $row['title'];?></h1>
 
-        <div class="news-content"><?php echo News::getContentShort($row['id'], false);?></div>
+        <div class="news-content">
+            <a href="<?php echo $site_url.'public/uploads/news/'.$row['id'].'_o.jpg' ?>"><img alt="" style="max-width:100px; max-height:50px;" src="<?php echo $site_url.'public/uploads/news/'.$row['id'].'_t.jpg' ?>"></a>
+            <?php echo News::getContentShort($row['id'], false);?>
+        </div>
         
         <div class="news-status">
             <div class="news-fleft">
