@@ -1,7 +1,7 @@
 <div class="row-fluid">
     <div class="span12">
         <div id="res"></div><div id="pro"></div>
-        <h2><a href="/admin/index.php?id=gallery"><?php echo __('Gallery', 'gallery'); ?></a>: <?php echo $gallery_title ?></h2><br />
+        <h2><a href="<?php echo Url::base(); ?>/index.php?id=gallery"><?php echo __('Gallery', 'gallery'); ?></a>: <?php echo $gallery_title ?></h2><br />
         <?php
         if (Notification::get('success')) Alert::success(Notification::get('success'));
         if (Notification::get('error')) Alert::success(Notification::get('error'));
