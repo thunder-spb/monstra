@@ -41,12 +41,12 @@
 			'ShortCode' => 'ShortCode',
 			'Settings gallery' => 'Settings gallery',
 			'Respect to the width' => 'Respect to the width',
-			'Respect to the height' => 'Respect to the height',Height thumbnails (px)
+			'Respect to the height' => 'Respect to the height'
 			'Similarly, cutting unnecessary' => 'Similarly, cutting unnecessary',
 			'Similarly with the expansion' => 'Similarly with the expansion',
 			'Items per page (website)' => 'Items per page (website)',
 			'Width thumbnails (px)' => 'Width thumbnails (px)',
-			'Height thumbnails (px)' => 'Height thumbnails (px)',Items per page (admin)
+			'Height thumbnails (px)' => 'Height thumbnails (px)'
 			'Cancel' => 'Cancel',
 			'Items per page (admin)' => 'Items per page (admin)',
 			'Original width (px, max)' => 'Original width (px, max)',
