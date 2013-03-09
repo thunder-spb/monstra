@@ -102,11 +102,21 @@
     <div class="modal-body">
         <?php
         echo (
-            Form::open(null, array('enctype' => 'multipart/form-data')).
+                Form::open(null, array('enctype' => 'multipart/form-data')).
                 Form::hidden('csrf', Security::token()).
-                Form::hidden('id', $opt['id']).
-                Form::input('file', null, array('type' => 'file', 'size' => '25')).
-                Form::submit('upload_file', __('Upload', 'stock'), array('class' => 'btn default')).
+                Form::hidden('id', $opt['id'])
+            );
+        ?>
+        <div class="fileupload fileupload-new" data-provides="fileupload">
+            <div class="fileupload-preview thumbnail" style="width: 200px; height: 150px;"></div>
+            <div>
+                <span class="btn btn-file"><span class="fileupload-new">Select image</span><span class="fileupload-exists">Change</span><input type="file" /></span>
+                <a href="#" class="btn fileupload-exists" data-dismiss="fileupload">Remove</a>
+            </div>
+        </div>
+        <?php
+        echo (
+                Form::submit('upload_file', __('Upload', 'catalog'), array('class' => 'btn default')).
                 Form::close()
         );
         ?>

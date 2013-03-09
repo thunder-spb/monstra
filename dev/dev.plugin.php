@@ -6,9 +6,10 @@
  *  @package Monstra
  *  @subpackage Plugins
  *  @copyright Copyright (C) KANekT @ http://kanekt.ru
- *  @license http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ *  @license http://creativecommons.org/licenses/by-nc/3.0/
+ *  Creative Commons Attribution-NonCommercial 3.0
  *  Donate Web Money Z104136428007 R346491122688
- *  @version 1.0.0
+ *  Yandex Money 410011782214621
  *
  */
 
@@ -17,14 +18,12 @@
 Plugin::register( __FILE__,
     __('DevJS', 'dev'),
     __('Developer JS  plugin for Monstra', 'dev'),
-    '1.3.0',
+    '1.3.1',
     'KANekT',
     'http://kanekt.ru/',
     'dev');
 
     // Load Sandbox Admin for Editor and Admin
-    Javascript::add('plugins/dev/js/jquery-migrate-1.1.1.min.js', 'frontend', 5);
-    Javascript::add('plugins/dev/js/jquery-migrate-1.1.1.min.js', 'backend', 5);
 
     if (Session::exists('user_role') && in_array(Session::get('user_role'), array('admin'))) {
 
@@ -59,6 +58,12 @@ Plugin::register( __FILE__,
         Javascript::add('plugins/dev/js/jquery.fileupload.js', 'backend', 17);
     }
 
+    if ((int)Option::get('dev_bootstrap_file_upload') > 0)
+    {
+        Stylesheet::add('plugins/dev/css/bootstrap-fileupload.min.css', 'backend',15);
+        Javascript::add('plugins/dev/js/bootstrap-fileupload.min.js', 'backend', 15);
+    }
+
     if ((int)Option::get('dev_fancy_frontend') > 0)
     {
         Javascript::add('plugins/dev/js/jquery.fancybox.pack.js', 'frontend', 15);
@@ -74,6 +79,14 @@ Plugin::register( __FILE__,
         Javascript::add('plugins/dev/js/script.js', 'backend', 17);
     }
 
+    if ((int)Option::get('dev_migrate_frontend') > 0)
+    {
+        Javascript::add('plugins/dev/js/jquery-migrate-1.1.1.min.js', 'frontend', 5);
+    }
+    if ((int)Option::get('dev_migrate_backend') > 0)
+    {
+        Javascript::add('plugins/dev/js/jquery-migrate-1.1.1.min.js', 'backend', 5);
+    }
 class Dev extends Frontend {
 
     /**

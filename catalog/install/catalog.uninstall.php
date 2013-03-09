@@ -29,3 +29,7 @@ RemoveDir(ROOT . DS . 'storage' . DS . 'catalog');
 $valid = (int)Option::get('dev_valid_backend');
 $valid--;
 Option::update('dev_valid_backend', $valid);
+
+$upload = (int)Option::get('dev_bootstrap_file_upload');
+$upload--;
+Option::update('dev_bootstrap_file_upload', $upload);

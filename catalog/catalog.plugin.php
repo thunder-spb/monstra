@@ -6,9 +6,10 @@
  *  @package Monstra
  *  @subpackage Plugins
  *  @copyright Copyright (C) KANekT @ http://kanekt.ru
- *  @license http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ *  @license http://creativecommons.org/licenses/by-nc/3.0/
+ *  Creative Commons Attribution-NonCommercial 3.0
  *  Donate Web Money Z104136428007 R346491122688
- *
+ *  Yandex Money 410011782214621
  */
 
 
@@ -16,7 +17,7 @@
 Plugin::register( __FILE__,
     __('Catalog', 'catalog'),
     __('Catalog plugin for Monstra', 'catalog'),
-    '1.3.3',
+    '1.3.4',
     'KANekT',
     'http://kanekt.ru/',
     'catalog');

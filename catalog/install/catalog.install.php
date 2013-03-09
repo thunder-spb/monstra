@@ -32,3 +32,7 @@ if(!is_dir($dir)) mkdir($dir, 0755);
 $valid = (int)Option::get('dev_valid_backend');
 $valid++;
 Option::update('dev_valid_backend', $valid);
+
+$upload = (int)Option::get('dev_bootstrap_file_upload');
+$upload++;
+Option::update('dev_bootstrap_file_upload', $upload);
