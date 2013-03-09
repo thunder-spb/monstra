@@ -14,7 +14,7 @@
             <li <?php if (Notification::get('catalog')) { ?>class="active"<?php } ?>><a href="#catalog" data-toggle="tab"><?php echo __('Item', 'catalog'); ?></a></li>
             <li <?php if (Notification::get('seo')) { ?>class="active"<?php } ?>><a href="#seo" data-toggle="tab"><?php echo __('SEO', 'catalog'); ?></a></li>
             <li <?php if (Notification::get('settings')) { ?>class="active"<?php } ?>><a href="#settings" data-toggle="tab"><?php echo __('Settings', 'catalog'); ?></a></li>
-            <li><a href="<?php echo Url::base(); ?>index.php?id=catalog&action=items&catalog_id=<?php echo $opt['cid']; ?>"><?php echo __('Return to Cat', 'catalog'); ?></a></li>
+            <li><a href="<?php echo Url::base(); ?>/index.php?id=catalog&action=items&catalog_id=<?php echo $opt['cid']; ?>"><?php echo __('Return to Cat', 'catalog'); ?></a></li>
         </ul>
 
         <div class="tab-content tab-page">
@@ -33,11 +33,8 @@
             <div class="tab-pane <?php if (Notification::get('seo')) { ?>active<?php } ?>" id="seo">
                 <?php
                 echo (
-                    Form::label('catalog_h1', __('H1', 'catalog')).
+                        Form::label('catalog_h1', __('H1', 'catalog')).
                         Form::input('catalog_h1', $post['h1'], array('class' => 'span8')).
-
-                        Form::label('catalog_slug', __('Alias (slug)', 'catalog')).
-                        Form::input('catalog_slug', $post['slug'], array('class' => 'span8')).
 
                         Form::label('catalog_keywords', __('Keywords', 'catalog')).
                         Form::input('catalog_keywords', $post['keywords'], array('class' => 'span8')).

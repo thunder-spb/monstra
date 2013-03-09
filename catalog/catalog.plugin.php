@@ -16,7 +16,7 @@
 Plugin::register( __FILE__,
     __('Catalog', 'catalog'),
     __('Catalog plugin for Monstra', 'catalog'),
-    '1.3.0',
+    '1.3.3',
     'KANekT',
     'http://kanekt.ru/',
     'catalog');
@@ -215,6 +215,9 @@ class Catalog extends Frontend {
         $opt['catalog'] = Catalog::$catalog->select('[slug="'.$catalog.'"]', null);
         $records = Catalog::$items->select('[id="'.$id.'"]', null);
         $records['hits'] = Catalog::hits($records['id'], $records['hits']);
+        Catalog::$meta['title'] = $records['title'];
+        Catalog::$meta['keywords'] = $records['keywords'];
+        Catalog::$meta['description'] = $records['description'];
 
         Catalog::$template = View::factory('catalog/views/frontend/item')
             ->assign('item', $records)
@@ -271,56 +274,5 @@ class Catalog extends Frontend {
         }
 
         return $hits;
-    }
-
-
-    /**
-     * current page
-     * pages all
-     * site_url
-     * limit pages
-     */
-    public static function paginator($current, $pages, $site_url, $limit_pages=10) {
-
-        if ($pages > 1) {
-
-            // pages count > limit pages
-            if ($pages > $limit_pages) {
-                $start = ($current <= 6) ? 1 : $current-3;
-                $finish = (($pages-$limit_pages) > $current) ? ($start + $limit_pages - 1) : $pages;
-            } else {
-                $start = 1;
-                $finish = $pages;
-            }
-
-            // pages list
-            echo '<div class="pagination"><ul>';
-
-            // next
-            if($current!=$pages)
-            {
-                echo '<li><a href="'.$site_url.($current+1).'">'.__('Next', 'catalog').'</a></li>';
-            }
-
-            if (($pages > $limit_pages) and ($current > 6)) {
-                echo '<li><a href="'.$site_url.'1">1</a></li>';
-            }
-
-            for ($i = $start; $i <= $finish; $i++) {
-                $class = ($i == $current) ? ' class="active"' : '';
-                echo '<li '.$class.'><a href="'.$site_url.$i.'">'.$i.'</a></li>';
-            }
-
-            if (($pages > $limit_pages) && ($current < ($pages - $limit_pages))) {
-                echo '<li><a href="'.$site_url.$pages.'">'.$pages.'</a></li>';
-            }
-
-            // prev
-            if($current!=1)
-            {
-                echo '<li><a href="'.$site_url.($current-1).'">'.__('Prev', 'catalog').'</a></li>';
-            }
-            echo '</ul></div>';
-        }
     }
 }

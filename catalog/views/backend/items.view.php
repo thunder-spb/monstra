@@ -41,12 +41,10 @@
                 <?php foreach ($items as $row): ?>
                 <tr>
                     <td><?php echo Html::anchor($row['title'], $opt['site_url'].'catalog/'.$opt['catalog']['slug'].'/item/'.$row['id'], array('target' => '_blank')); ?></td>
-                    <td><?php
-                        if (File::exists($opt['dir'].$row['id'].'.jpg'))
-                        {
-                            ?>
-                            <a href="<?php echo $opt['url'].$row['id'].'.jpg' ?>"><img alt="" style="max-width:100px; max-height:50px;" src="<?php echo $opt['url'].$row['id'].'.jpg' ?>"></a>
-                            <?php } ?>
+                    <td class="image">
+                        <?php if (File::exists($opt['dir'].$row['id'].'.jpg')) { ?>
+                            <a href="#" rel="<?php echo $opt['url'].$row['id'].'.jpg' ?>"><img alt="" style="max-width:100px; max-height:50px;" src="<?php echo $opt['url'].$row['id'].'.jpg' ?>"></a>
+                        <?php } ?>
                     </td>
                     <td><?php echo $row['price']; ?></td>
                     <td>{catalog list="item" uid=<?php echo $row['id']; ?>}</td>
@@ -77,6 +75,14 @@
             ?>
             </tbody>
         </table>
-        <?php Catalog::paginator($opt['page'], $opt['pages'], 'index.php?id=catalog&action=items&catalog_id='.$opt['cid'].'&sort='.$opt['sort'].'&order='.$opt['order'].'&page=');?>
+        <?php Dev::paginator($opt['page'], $opt['pages'], 'index.php?id=catalog&action=items&catalog_id='.$opt['cid'].'&sort='.$opt['sort'].'&order='.$opt['order'].'&page=');?>
+    </div>
+</div>
+<div id="previewLightbox" class="lightbox hide fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class='lightbox-header'>
+        <button type="button" class="close" data-dismiss="lightbox" aria-hidden="true">&times;</button>
+    </div>
+    <div class='lightbox-content'>
+        <img />
     </div>
 </div>

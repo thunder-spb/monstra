@@ -54,6 +54,6 @@
             ?>
             </tbody>
         </table>
-        <?php Catalog::paginator($opt['page'], $opt['pages'], 'index.php?id=catalog&page=');?>
+        <?php Dev::paginator($opt['page'], $opt['pages'], 'index.php?id=catalog&page=');?>
     </div>
 </div>

@@ -45,38 +45,12 @@ class CatalogAdmin extends Backend {
                         $_FILES['file']['type'] == 'image/gif') {
 
                         $img  = Image::factory($_FILES['file']['tmp_name']);
-
-                        $wmax   = (int)Option::get('catalog_wmax');
-                        $hmax   = (int)Option::get('catalog_hmax');
-                        $width  = (int)Option::get('catalog_w');
-                        $height = (int)Option::get('catalog_h');
-                        $resize = Option::get('catalog_resize');
-
-                        $ratio = $width/$height;
-
-                        if ($img->width > $wmax or $img->height > $hmax) {
-                            if ($img->height > $img->width) {
-                                $img->resize($wmax, $hmax, Image::HEIGHT);
-                            } else {
-                                $img->resize($wmax, $hmax, Image::WIDTH);
-                            }
-                        }
-                        $img->save($opt['dir'] . $uid.'.jpg');
-
-                        switch ($resize) {
-                            case 'width' :   $img->resize($width, $height, Image::WIDTH);  break;
-                            case 'height' :  $img->resize($width, $height, Image::HEIGHT); break;
-                            case 'stretch' : $img->resize($width, $height); break;
-                            default :
-                                // crop
-                                if (($img->width/$img->height) > $ratio) {
-                                    $img->resize($width, $height, Image::HEIGHT)->crop($width, $height, round(($img->width-$width)/2),0);
-                                } else {
-                                    $img->resize($width, $height, Image::WIDTH)->crop($width, $height, 0, 0);
-                                }
-                                break;
-                        }
-                        $img->save($opt['dir']. 'thumbnail' . DS . $uid.'.jpg');
+                        $file['wmax']   = (int)Option::get('catalog_wmax');
+                        $file['hmax']   = (int)Option::get('catalog_hmax');
+                        $file['w']      = (int)Option::get('catalog_w');
+                        $file['h']      = (int)Option::get('catalog_h');
+                        $file['resize'] = Option::get('catalog_resize');
+                        DevAdmin::ReSize($img, $opt['dir'], $uid.'.jpg', $file);
                     }
                 }
                 Request::redirect('index.php?id=catalog&action=edit&upload=1&item_id='.$uid);
@@ -249,9 +223,6 @@ class CatalogAdmin extends Backend {
                     if (Request::post('add_item') || Request::post('add_item_and_exit')) {
                         if (Security::check(Request::post('csrf'))) {
 
-                            if (trim(Request::post('catalog_slug')) == '') $items_slug = trim(Request::post('catalog_name'));
-                            else $items_slug = trim(Request::post('catalog_slug'));
-
                             if (Valid::date(Request::post('catalog_date'))) $date = strtotime(Request::post('catalog_date'));
                             else $date = time();
 
@@ -265,7 +236,6 @@ class CatalogAdmin extends Backend {
                                     'description'  => Request::post('catalog_description'),
                                     'keywords'     => Request::post('catalog_keywords'),
                                     'short'        => Request::post('catalog_short'),
-                                    'slug'         => Security::safeName($items_slug, '-', true),
                                     'date'         => $date,
                                     'author'       => $author,
                                     'status'       => Request::post('catalog_status'),
@@ -297,7 +267,6 @@ class CatalogAdmin extends Backend {
                     $post['h1']           = (Request::post('catalog_h1'))          ? Request::post('catalog_h1')          : '';
                     $post['description']  = (Request::post('catalog_description')) ? Request::post('catalog_description') : '';
                     $post['keywords']     = (Request::post('catalog_keywords'))    ? Request::post('catalog_keywords')    : '';
-                    $post['slug']         = (Request::post('catalog_slug'))        ? Request::post('catalog_slug')        : '';
                     $post['short']        = (Request::post('catalog_short'))       ? Request::post('catalog_short')       : '';
                     $post['content']      = (Request::post('editor'))              ? Request::post('editor')              : '';
 
@@ -317,9 +286,6 @@ class CatalogAdmin extends Backend {
 
                         if (Request::post('edit_item') || Request::post('edit_item_and_exit')) {
                             if (Security::check(Request::post('csrf'))) {
-                                if (trim(Request::post('catalog_slug')) == '') $items_slug = trim(Request::post('catalog_name'));
-                                else $items_slug = trim(Request::post('catalog_slug'));
-
                                 if (Valid::date(Request::post('catalog_date'))) $date = strtotime(Request::post('catalog_date'));
                                 else $date = time();
 
@@ -335,7 +301,6 @@ class CatalogAdmin extends Backend {
                                         'description'  => Request::post('catalog_description'),
                                         'keywords'     => Request::post('catalog_keywords'),
                                         'short'        => Request::post('catalog_short'),
-                                        'slug'         => Security::safeName($items_slug, '-', true),
                                         'date'         => $date,
                                         'author'       => $author,
                                         'status'       => Request::post('catalog_status')
@@ -367,7 +332,6 @@ class CatalogAdmin extends Backend {
                             $post['title']         = (Request::post('catalog_title'))       ? Request::post('catalog_title')       : $data['title'];
                             $post['price']         = (Request::post('catalog_price'))       ? Request::post('catalog_price')       : $data['price'];
                             $post['currency']      = (Request::post('catalog_currency'))    ? Request::post('catalog_currency')    : $data['currency'];
-                            $post['slug']          = (Request::post('catalog_slug'))        ? Request::post('catalog_slug')        : $data['slug'];
                             $post['h1']            = (Request::post('catalog_h1'))          ? Request::post('catalog_h1')          : $data['h1'];
                             $post['keywords']      = (Request::post('catalog_keywords'))    ? Request::post('catalog_keywords')    : $data['keywords'];
                             $post['description']   = (Request::post('catalog_description')) ? Request::post('catalog_description') : $data['description'];
@@ -405,12 +369,27 @@ class CatalogAdmin extends Backend {
                             $data = $folders->select('[id='.$id.']', null);
 
                             if ($folders->deleteWhere('[id='.$id.']')) {
-                                //File::delete(STORAGE . DS . 'catalog' . DS . $id . '.catalog.txt');
+                                File::delete($opt['dir'] . $id . '.jpg');
+                                File::delete($opt['dir']. 'thumbnail' . DS . $id . '.jpg');
+                                File::delete(STORAGE . DS . 'catalog' . DS . 'catalog.' . $id . '.txt');
                                 Notification::set('success', __('Catalog <i>:catalog</i> deleted', 'catalog',
                                     array(':catalog' => $data['title'])));
                             }
 
-                            Action::run('admin_pages_action_delete_cat');
+                            $data = $items->select('[catalog='.$id.']');
+
+                            if (count($data) > 0)
+                            {
+                                foreach ($data as $item)
+                                {
+                                    if ($items->deleteWhere('[id='.$item['id'].']')) {
+                                        File::delete($opt['dir'] . $item['id'] . '.jpg');
+                                        File::delete($opt['dir']. 'thumbnail' . DS . $item['id'] . '.jpg');
+                                        File::delete(STORAGE . DS . 'catalog' . DS . 'item.' . $item['id'] . '.txt');
+                                    }
+                                }
+                            }
+
                             Request::redirect('index.php?id=catalog');
 
                         } else { die('csrf detected!'); }
@@ -423,12 +402,13 @@ class CatalogAdmin extends Backend {
                             $data = $items->select('[id='.$id.']', null);
 
                             if ($items->deleteWhere('[id='.$id.']')) {
-                                File::delete(STORAGE . DS . 'catalog' . DS . $id . '.catalog.txt');
+                                File::delete($opt['dir'] . $id . '.jpg');
+                                File::delete($opt['dir']. 'thumbnail' . DS . $id . '.jpg');
+                                File::delete(STORAGE . DS . 'catalog' . DS . 'item.' . $id . '.txt');
                                 Notification::set('success', __('Item in <i>:catalog</i> deleted', 'catalog',
                                     array(':catalog' => Html::toText($data['title']))));
                             }
 
-                            Action::run('admin_pages_action_delete');
                             Request::redirect('index.php?id=catalog&action=items&catalog_id='.$data['catalog']);
 
                         } else { die('csrf detected!'); }
