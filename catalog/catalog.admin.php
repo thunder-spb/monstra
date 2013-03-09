@@ -1,0 +1,501 @@
+<?php
+
+Navigation::add(__('Catalog', 'catalog'), 'content', 'catalog', 10);
+
+Action::add('admin_themes_extra_index_template_actions','CatalogAdmin::formComponent');
+Action::add('admin_themes_extra_actions','CatalogAdmin::formComponentSave');
+
+//Stylesheet::add('plugins/catalog/content/admin.css', 'backend', 11);
+
+class CatalogAdmin extends Backend {
+
+    public static function main() {
+
+        $opt['site_url'] = Option::get('siteurl');
+        $errors = array();
+        $opt['status'] = array('published' => __('Published', 'catalog'), 'draft' => __('Draft', 'catalog'));
+
+        $items = new Table('cat_items');
+        $folders = new Table('cat_folder');
+        $users = new Table('users');
+
+        $user = $users->select('[id='.Session::get('user_id').']', null);
+
+        $user['firstname'] = Html::toText($user['firstname']);
+        $user['lastname']  = Html::toText($user['lastname']);
+
+        if (isset($user['firstname']) && trim($user['firstname']) !== '') {
+            if (trim($user['lastname']) !== '') $lastname = ' '.$user['lastname']; else $lastname = '';
+            $author = $user['firstname'] . $lastname;
+        } else {
+            $author = Session::get('user_login');
+        }
+
+        $opt['dir'] = ROOT . DS . 'public' . DS . 'uploads' . DS . 'catalog' . DS;
+        $opt['url'] = $opt['site_url'] . 'public/uploads/catalog/';
+        /**
+         *  Upload image
+         */
+        if (Request::post('upload_file')) {
+            if (Security::check(Request::post('csrf'))) {
+                $uid = (int)Request::post('id');
+                if ($_FILES['file']) {
+                    if($_FILES['file']['type'] == 'image/jpeg' ||
+                        $_FILES['file']['type'] == 'image/png' ||
+                        $_FILES['file']['type'] == 'image/gif') {
+
+                        $img  = Image::factory($_FILES['file']['tmp_name']);
+
+                        $wmax   = (int)Option::get('catalog_wmax');
+                        $hmax   = (int)Option::get('catalog_hmax');
+                        $width  = (int)Option::get('catalog_w');
+                        $height = (int)Option::get('catalog_h');
+                        $resize = Option::get('catalog_resize');
+
+                        $ratio = $width/$height;
+
+                        if ($img->width > $wmax or $img->height > $hmax) {
+                            if ($img->height > $img->width) {
+                                $img->resize($wmax, $hmax, Image::HEIGHT);
+                            } else {
+                                $img->resize($wmax, $hmax, Image::WIDTH);
+                            }
+                        }
+                        $img->save($opt['dir'] . $uid.'.jpg');
+
+                        switch ($resize) {
+                            case 'width' :   $img->resize($width, $height, Image::WIDTH);  break;
+                            case 'height' :  $img->resize($width, $height, Image::HEIGHT); break;
+                            case 'stretch' : $img->resize($width, $height); break;
+                            default :
+                                // crop
+                                if (($img->width/$img->height) > $ratio) {
+                                    $img->resize($width, $height, Image::HEIGHT)->crop($width, $height, round(($img->width-$width)/2),0);
+                                } else {
+                                    $img->resize($width, $height, Image::WIDTH)->crop($width, $height, 0, 0);
+                                }
+                                break;
+                        }
+                        $img->save($opt['dir']. 'thumbnail' . DS . $uid.'.jpg');
+                    }
+                }
+                Request::redirect('index.php?id=catalog&action=edit&upload=1&item_id='.$uid);
+            } else { die('csrf detected!'); }
+        }
+
+        if (Request::get('action')) {
+            switch (Request::get('action')) {
+
+                case "settings":
+
+                    if (Request::post('catalog_submit_settings_cancel')) {
+                        Request::redirect('index.php?id=catalog');
+                    }
+
+                    if (Request::post('catalog_submit_settings')) {
+                        if (Security::check(Request::post('csrf'))) {
+                            Option::update(array(
+                                'catalog_limit'  => (int)Request::post('limit'),
+                                'catalog_limit_admin' => (int)Request::post('limit_admin'),
+                                'catalog_w' => (int)Request::post('width_thumb'),
+                                'catalog_h' => (int)Request::post('height_thumb'),
+                                'catalog_wmax'   => (int)Request::post('width_orig'),
+                                'catalog_hmax'   => (int)Request::post('height_orig'),
+                                'catalog_resize' => (string)Request::post('resize'),
+                                'catalog_currency' => (string)Request::post('currency')
+                            ));
+
+                            Notification::set('success', __('Your changes have been saved', 'catalog'));
+
+                            Request::redirect('index.php?id=catalog');
+                        } else { die('csrf detected!'); }
+                    }
+
+                    View::factory('catalog/views/backend/settings')->display();
+                    break;
+
+                case "items":
+                    $limit = Option::get('catalog_limit_admin');
+                    $id = (int)Request::get('catalog_id');
+                    $records_all = $items->select('[catalog="'.$id.'"]', 'all', null, array('name', 'price', 'title', 'h1', 'description', 'keywords', 'slug', 'date', 'author', 'status', 'catalog', 'hits'));
+                    $opt['catalog'] = $folders->select('[id='.$id.']', null);
+                    $cnt = count($records_all);
+                    $opt['pages'] = ceil($cnt/$limit);
+
+                    $opt['cid'] = (Request::get('catalog_id')) ? (int)Request::get('catalog_id') : 1;
+                    $opt['page'] = (Request::get('page')) ? (int)Request::get('page') : 1;
+                    $opt['sort'] = (Request::get('sort')) ? (string)Request::get('sort') : 'date';
+                    $opt['order'] = (Request::get('order') and Request::get('order')=='ASC') ? 'ASC' : 'DESC';
+
+                    if ($opt['page'] < 1) { $opt['page'] = 1; }
+                    elseif ($opt['page'] > $opt['pages']) { $opt['page'] = $opt['pages']; }
+
+                    $start = ($opt['page']-1)*$limit;
+
+                    $records_sort = Arr::subvalSort($records_all, $opt['sort'], $opt['order']);
+                    if($cnt>0) $records = array_slice($records_sort, $start, $limit);
+                    else $records = array();
+
+                    View::factory('catalog/views/backend/items')
+                        ->assign('items', $records)
+                        ->assign('opt', $opt)
+                        ->display();
+                    break;
+
+                case "cat_add":
+                    if (Request::post('exit'))
+                    {
+                        Request::redirect('index.php?id=catalog');
+                    }
+                    if (Request::post('add_catalog') || Request::post('add_catalog_and_exit')) {
+                        if (Security::check(Request::post('csrf'))) {
+
+                            if (count($errors) == 0) {
+
+                                $data = array(
+                                    'title'         => Request::post('catalog_title'),
+                                    'slug'          => Security::safeName(Request::post('catalog_slug'), '-', true),
+                                    'description'   => Request::post('catalog_description'),
+                                    'keywords'      => Request::post('catalog_keywords'),
+                                    'parent'        => 0
+                                );
+
+                                if($folders->insert($data)) {
+
+                                    $last_id = $folders->lastId();
+                                    File::setContent(STORAGE . DS . 'catalog' . DS .'catalog.'. $last_id .'.txt', XML::safe(Request::post('editor')));
+                                    Notification::set('success', __('New catalog <i>:catalog</i> have been added.', 'catalog', array(':catalog' => $data['title'])));
+                                }
+
+                                if (Request::post('add_catalog')) {
+                                    Request::redirect('index.php?id=catalog&action=cat_edit&catalog_id='.$last_id);
+                                } else {
+                                    Request::redirect('index.php?id=catalog');
+                                }
+                            }
+                        } else { die('csrf detected!'); }
+                    }
+
+                    $post['slug']          = (Request::post('catalog_slug'))        ? Request::post('catalog_slug')        : '';
+                    $post['title']         = (Request::post('catalog_title'))       ? Request::post('catalog_title')       : '';
+                    $post['description']   = (Request::post('catalog_description')) ? Request::post('catalog_description') : '';
+                    $post['keywords']      = (Request::post('catalog_keywords'))    ? Request::post('catalog_keywords')    : '';
+
+                    View::factory('catalog/views/backend/cat_add')
+                        ->assign('post', $post)
+                        ->assign('opt', $opt)
+                        ->assign('errors', $errors)
+                        ->display();
+                    break;
+
+                case "cat_edit":
+                    if(Request::get('catalog_id')) {
+
+                        if (Request::post('edit_catalog') || Request::post('edit_catalog_and_exit')) {
+                            if (Security::check(Request::post('csrf'))) {
+                                if (count($errors) == 0) {
+
+                                    $data = array(
+                                        'title'        => Request::post('catalog_title'),
+                                        'slug'         => Security::safeName(Request::post('catalog_slug'), '-', true),
+                                        'description'  => Request::post('catalog_description'),
+                                        'keywords'     => Request::post('catalog_keywords'),
+                                        'parent' => 0
+                                    );
+
+                                    $id = (int)Request::post('catalog_id');
+
+                                    if($folders->updateWhere('[id='.$id.']', $data)) {
+                                        File::setContent(STORAGE . DS . 'catalog' . DS .'catalog.'. $id .'.txt', XML::safe(Request::post('editor')));
+                                        Notification::set('success', __('Your changes to the catalog <i>:catalog</i> have been saved.', 'catalog', array(':catalog' => Request::post('catalog_title'))));
+                                    }
+
+                                    if (Request::post('edit_catalog_and_exit')) {
+                                        Request::redirect('index.php?id=catalog');
+                                    } else {
+                                        Request::redirect('index.php?id=catalog&action=cat_edit&catalog_id='.$id);
+                                    }
+                                }
+                            } else { die('csrf detected!'); }
+                        }
+                        $post['cid'] = (int)Request::get('catalog_id');
+                        $data = $folders->select('[id="'.$post['cid'].'"]', null);
+
+                        if($data) {
+                            $post['slug']          = (Request::post('catalog_slug'))        ? Request::post('catalog_slug')        : $data['slug'];
+                            $post['title']         = (Request::post('catalog_title'))       ? Request::post('catalog_title')       : $data['title'];
+                            $post['description']   = (Request::post('catalog_description')) ? Request::post('catalog_description') : $data['description'];
+                            $post['keywords']      = (Request::post('catalog_keywords'))    ? Request::post('catalog_keywords')    : $data['keywords'];
+                            $post['content']       = (Request::post('editor'))              ? Request::post('editor')              : Text::toHtml(File::getContent(STORAGE . DS . 'catalog' . DS. 'catalog.'. $post['cid'] .'.txt'));
+
+                            View::factory('catalog/views/backend/cat_edit')
+                                ->assign('post', $post)
+                                ->assign('errors', $errors)
+                                ->display();
+                        }
+                    }
+                    break;
+
+                case "add":
+
+                    $opt['cid'] = (int)Request::get('catalog_id');
+                    $folder = $folders->select('[id='.$opt['cid'].']', null);
+                    $opt['title'] = $folder['title'];
+
+                    if (Request::post('exit'))
+                    {
+                        Request::redirect('index.php?id=catalog&action=items&catalog_id='.$opt['cid']);
+                    }
+                    if (Request::post('add_item') || Request::post('add_item_and_exit')) {
+                        if (Security::check(Request::post('csrf'))) {
+
+                            if (trim(Request::post('catalog_slug')) == '') $items_slug = trim(Request::post('catalog_name'));
+                            else $items_slug = trim(Request::post('catalog_slug'));
+
+                            if (Valid::date(Request::post('catalog_date'))) $date = strtotime(Request::post('catalog_date'));
+                            else $date = time();
+
+                            if (count($errors) == 0) {
+
+                                $data = array(
+                                    'title'        => Request::post('catalog_title'),
+                                    'price'        => Request::post('catalog_price'),
+                                    'currency'     => Request::post('catalog_currency'),
+                                    'h1'           => Request::post('catalog_h1'),
+                                    'description'  => Request::post('catalog_description'),
+                                    'keywords'     => Request::post('catalog_keywords'),
+                                    'short'        => Request::post('catalog_short'),
+                                    'slug'         => Security::safeName($items_slug, '-', true),
+                                    'date'         => $date,
+                                    'author'       => $author,
+                                    'status'       => Request::post('catalog_status'),
+                                    'catalog'      => $opt['cid'],
+                                    'hits' => 0
+                                );
+
+                                if($items->insert($data)) {
+
+                                    $last_id = $items->lastId();
+
+                                    File::setContent(STORAGE . DS . 'catalog' . DS . 'item.' . $last_id . '.txt', XML::safe(Request::post('editor')));
+
+                                    Notification::set('success', __('New item <i>:item</i> have been added.', 'catalog', array(':item' => Request::post('catalog_title'))));
+                                }
+
+                                if (Request::post('add_item') && isset($last_id)) {
+                                    Request::redirect('index.php?id=catalog&action=edit&item_id='.$last_id);
+                                } else {
+                                    Request::redirect('index.php?id=catalog&action=items&catalog_id='.$opt['cid']);
+                                }
+                            }
+                        } else { die('csrf detected!'); }
+                    }
+
+                    $post['title']        = (Request::post('catalog_title'))       ? Request::post('catalog_title')       : '';
+                    $post['price']        = (Request::post('catalog_price'))       ? Request::post('catalog_price')       : '';
+                    $post['currency']     = (Request::post('catalog_currency'))    ? Request::post('catalog_currency')    : Option::get('catalog_currency');
+                    $post['h1']           = (Request::post('catalog_h1'))          ? Request::post('catalog_h1')          : '';
+                    $post['description']  = (Request::post('catalog_description')) ? Request::post('catalog_description') : '';
+                    $post['keywords']     = (Request::post('catalog_keywords'))    ? Request::post('catalog_keywords')    : '';
+                    $post['slug']         = (Request::post('catalog_slug'))        ? Request::post('catalog_slug')        : '';
+                    $post['short']        = (Request::post('catalog_short'))       ? Request::post('catalog_short')       : '';
+                    $post['content']      = (Request::post('editor'))              ? Request::post('editor')              : '';
+
+                    $opt['date'] = Date::format(time(), 'Y-m-d H:i:s');
+                    Notification::setNow('catalog', 'catalog');
+
+                    View::factory('catalog/views/backend/add')
+                        ->assign('post', $post)
+                        ->assign('opt', $opt)
+                        ->assign('errors', $errors)
+                        ->display();
+                    break;
+
+                case "edit":
+
+                    if(Request::get('item_id')) {
+
+                        if (Request::post('edit_item') || Request::post('edit_item_and_exit')) {
+                            if (Security::check(Request::post('csrf'))) {
+                                if (trim(Request::post('catalog_slug')) == '') $items_slug = trim(Request::post('catalog_name'));
+                                else $items_slug = trim(Request::post('catalog_slug'));
+
+                                if (Valid::date(Request::post('catalog_date'))) $date = strtotime(Request::post('catalog_date'));
+                                else $date = time();
+
+                                $id = (int)Request::post('item_id');
+
+                                if (count($errors) == 0) {
+
+                                    $data = array(
+                                        'title'        => Request::post('catalog_title'),
+                                        'price'        => Request::post('catalog_price'),
+                                        'currency'     => Request::post('catalog_currency'),
+                                        'h1'           => Request::post('catalog_h1'),
+                                        'description'  => Request::post('catalog_description'),
+                                        'keywords'     => Request::post('catalog_keywords'),
+                                        'short'        => Request::post('catalog_short'),
+                                        'slug'         => Security::safeName($items_slug, '-', true),
+                                        'date'         => $date,
+                                        'author'       => $author,
+                                        'status'       => Request::post('catalog_status')
+                                    );
+
+                                    if($items->updateWhere('[id='.$id.']', $data)) {
+                                        File::setContent(STORAGE . DS . 'catalog' . DS . 'item.' . $id . '.txt', XML::safe(Request::post('editor')));
+                                        Notification::set('success', __('Your changes to the item <i>:item</i> have been saved.', 'catalog',
+                                            array(':item' =>Request::post('catalog_title'))));
+                                    }
+
+                                    if (Request::post('edit_item_and_exit')) {
+                                        Request::redirect('index.php?id=catalog&action=items&catalog_id='.Request::post('cat_id'));
+                                    } else {
+                                        Request::redirect('index.php?id=catalog&action=edit&item_id='.$id);
+                                    }
+                                }
+                            }
+                        }
+
+                        $opt['id'] = (int)Request::get('item_id');
+                        $data = $items->select('[id="'.$opt['id'].'"]', null);
+
+                        if($data) {
+
+                            $item_content = File::getContent(STORAGE . DS . 'catalog' . DS . 'item.' . $opt['id'] . '.txt');
+                            $opt['cid'] = $data['catalog'];
+
+                            $post['title']         = (Request::post('catalog_title'))       ? Request::post('catalog_title')       : $data['title'];
+                            $post['price']         = (Request::post('catalog_price'))       ? Request::post('catalog_price')       : $data['price'];
+                            $post['currency']      = (Request::post('catalog_currency'))    ? Request::post('catalog_currency')    : $data['currency'];
+                            $post['slug']          = (Request::post('catalog_slug'))        ? Request::post('catalog_slug')        : $data['slug'];
+                            $post['h1']            = (Request::post('catalog_h1'))          ? Request::post('catalog_h1')          : $data['h1'];
+                            $post['keywords']      = (Request::post('catalog_keywords'))    ? Request::post('catalog_keywords')    : $data['keywords'];
+                            $post['description']   = (Request::post('catalog_description')) ? Request::post('catalog_description') : $data['description'];
+                            $post['status']        = (Request::post('catalog_status'))      ? Request::post('catalog_status')      : $data['status'];
+                            $post['date']          = (Request::post('catalog_date'))        ? Request::post('catalog_date')        : $data['date'];
+                            $post['short']         = (Request::post('catalog_short'))       ? Request::post('catalog_short')       : $data['short'];
+                            $post['content']       = (Request::post('editor'))              ? Request::post('editor')              : Text::toHtml($item_content);
+
+                            $opt['date'] = Date::format($post['date'], 'Y-m-d H:i:s');
+
+                            if ((int)Request::get('upload') > 0)
+                            {
+                                Notification::setNow('upload', 'catalog');
+                            }
+                            else
+                            {
+                                Notification::setNow('catalog', 'catalog');
+                            }
+
+                            View::factory('catalog/views/backend/edit')
+                                ->assign('post', $post)
+                                ->assign('opt', $opt)
+                                ->assign('errors', $errors)
+                                ->display();
+                        }
+                    }
+                    break;
+
+                case "delete":
+
+                    if (Request::get('catalog_id')) {
+                        if (Security::check(Request::get('token'))) {
+                            $id = (int)Request::get('catalog_id');
+
+                            $data = $folders->select('[id='.$id.']', null);
+
+                            if ($folders->deleteWhere('[id='.$id.']')) {
+                                //File::delete(STORAGE . DS . 'catalog' . DS . $id . '.catalog.txt');
+                                Notification::set('success', __('Catalog <i>:catalog</i> deleted', 'catalog',
+                                    array(':catalog' => $data['title'])));
+                            }
+
+                            Action::run('admin_pages_action_delete_cat');
+                            Request::redirect('index.php?id=catalog');
+
+                        } else { die('csrf detected!'); }
+                    }
+
+                    if (Request::get('item_id')) {
+                        if (Security::check(Request::get('token'))) {
+                            $id = (int)Request::get('item_id');
+
+                            $data = $items->select('[id='.$id.']', null);
+
+                            if ($items->deleteWhere('[id='.$id.']')) {
+                                File::delete(STORAGE . DS . 'catalog' . DS . $id . '.catalog.txt');
+                                Notification::set('success', __('Item in <i>:catalog</i> deleted', 'catalog',
+                                    array(':catalog' => Html::toText($data['title']))));
+                            }
+
+                            Action::run('admin_pages_action_delete');
+                            Request::redirect('index.php?id=catalog&action=items&catalog_id='.$data['catalog']);
+
+                        } else { die('csrf detected!'); }
+                    }
+                    break;
+            }
+
+        } else {
+            $limit = Option::get('catalog_limit_admin');
+            $records_all = $folders->select(null, 'all', null, array('title', 'slug'));
+            $count_catalog = count($records_all);
+            $opt['pages'] = ceil($count_catalog/$limit);
+
+            $opt['page'] = (Request::get('page')) ? (int)Request::get('page') : 1;
+//			$sort = (Request::get('sort')) ? (string)Request::get('sort') : 'date';
+//			$order = (Request::get('order') and Request::get('order')=='ASC') ? 'ASC' : 'DESC';
+
+            if ($opt['page'] < 1) { $opt['page'] = 1; }
+            elseif ($opt['page'] > $opt['pages']) { $opt['page'] = $opt['pages']; }
+
+            $start = ($opt['page']-1)*$limit;
+
+//			$records_sort = Arr::subvalSort($records_all, $sort, $order);
+            $records_sort = $records_all;
+            if($count_catalog>0) $records = array_slice($records_sort, $start, $limit);
+            else $records = array();
+
+            View::factory('catalog/views/backend/index')
+                ->assign('items', $records)
+                ->assign('opt', $opt)
+//				->assign('sort', $sort)
+//				->assign('order', $order)
+                ->display();
+        }
+    }
+
+    /**
+     * Form Component Save
+     */
+    public static function formComponentSave() {
+        if (Request::post('catalog_component_save')) {
+            if (Security::check(Request::post('csrf'))) {
+                Option::update('catalog_template', Request::post('catalog_form_template'));
+                Request::redirect('index.php?id=themes');
+            }
+        }
+    }
+
+    /**
+     * Form Component
+     */
+    public static function formComponent() {
+
+        $_templates = Themes::getTemplates();
+        foreach($_templates as $template) {
+            $t = basename($template, '.template.php');
+            $templates[$t] = $t;
+        }
+
+        echo (
+            Form::open().
+                Form::hidden('csrf', Security::token()).
+                Form::label('catalog_form_template', __('News template', 'catalog')).
+                Form::select('catalog_form_template', $templates, Option::get('catalog_template')).
+                Html::br().
+                Form::submit('catalog_component_save', __('Save', 'catalog'), array('class' => 'btn')).
+                Form::close()
+        );
+    }
+}
