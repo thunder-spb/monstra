@@ -21,6 +21,8 @@ class DevAdmin extends Backend {
                     'dev_valid_backend'         => (int)Request::post('valid_backend'),
                     'dev_fancy_frontend'        => (int)Request::post('fancy_frontend'),
                     'dev_fancy_backend'         => (int)Request::post('fancy_backend'),
+                    'dev_migrate_frontend'      => (int)Request::post('jquery_migrate_frontend'),
+                    'dev_migrate_backend'       => (int)Request::post('jquery_migrate_backend'),
                     'dev_file_upload'           => (int)Request::post('file_upload'),
                     'dev_bootstrap_file_upload' => (int)Request::post('bootstrap_file_upload'),
                     'dev_date_frontend'         => (int)Request::post('date_frontend'),

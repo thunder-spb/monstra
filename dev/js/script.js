@@ -1,3 +1,7 @@
 $(document).ready(function() {
-	$(".cImg").fancybox();
+	$(".cImg").fancybox({
+		helpers : {
+			media : {}
+		}
+	});
 });

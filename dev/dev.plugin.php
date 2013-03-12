@@ -16,8 +16,8 @@
 
 // Register plugin
 Plugin::register( __FILE__,
-    __('DevJS', 'dev'),
-    __('Developer JS  plugin for Monstra', 'dev'),
+    __('Dev', 'dev'),
+    __('Developer plugin for Monstra', 'dev'),
     '1.3.1',
     'KANekT',
     'http://kanekt.ru/',
@@ -56,17 +56,19 @@ Plugin::register( __FILE__,
         Javascript::add('plugins/dev/js/vendor/jquery.ui.widget.js', 'backend', 15);
         Javascript::add('plugins/dev/js/jquery.iframe-transport.js', 'backend', 16);
         Javascript::add('plugins/dev/js/jquery.fileupload.js', 'backend', 17);
+        Javascript::add('plugins/dev/js/jquery.fileupload-ui.js', 'backend', 18);
     }
 
     if ((int)Option::get('dev_bootstrap_file_upload') > 0)
     {
-        Stylesheet::add('plugins/dev/css/bootstrap-fileupload.min.css', 'backend',15);
-        Javascript::add('plugins/dev/js/bootstrap-fileupload.min.js', 'backend', 15);
+        Stylesheet::add('plugins/dev/css/bootstrap-fileupload.min.css', 'backend',18);
+        Javascript::add('plugins/dev/js/bootstrap-fileupload.min.js', 'backend', 18);
     }
 
     if ((int)Option::get('dev_fancy_frontend') > 0)
     {
         Javascript::add('plugins/dev/js/jquery.fancybox.pack.js', 'frontend', 15);
+        Javascript::add('plugins/dev/js/jquery.fancybox-media.js', 'frontend', 16);
         Stylesheet::add('plugins/dev/css/jquery.fancybox.css', 'frontend',15);
 
         Javascript::add('plugins/dev/js/script.js', 'frontend', 17);
@@ -97,6 +99,7 @@ class Dev extends Frontend {
      */
     public static function paginator($current, $pages, $site_url, $sections = 1, $limit_pages=10) {
 
+        $content = '';
         if ($pages > 1) {
 
             // pages count > limit pages
@@ -109,33 +112,34 @@ class Dev extends Frontend {
             }
 
             // pages list
-            echo '<div class="pagination"><ul>';
+            $content .= '<div class="pagination"><ul>';
 
             // next
             if($current!=$pages && $sections > 0)
             {
-                echo '<li><a href="'.$site_url.($current+1).'">'.__('Next', 'catalog').'</a></li>';
+                $content .= '<li><a href="'.$site_url.($current+1).'">'.__('Next', 'dev').'</a></li>';
             }
 
             if (($pages > $limit_pages) and ($current > 6)) {
-                echo '<li><a href="'.$site_url.'1">1</a></li>';
+                $content .= '<li><a href="'.$site_url.'1">1</a></li>';
             }
 
             for ($i = $start; $i <= $finish; $i++) {
                 $class = ($i == $current) ? ' class="active"' : '';
-                echo '<li '.$class.'><a href="'.$site_url.$i.'">'.$i.'</a></li>';
+                $content .= '<li '.$class.'><a href="'.$site_url.$i.'">'.$i.'</a></li>';
             }
 
             if (($pages > $limit_pages) && ($current < ($pages - $limit_pages))) {
-                echo '<li><a href="'.$site_url.$pages.'">'.$pages.'</a></li>';
+                $content .= '<li><a href="'.$site_url.$pages.'">'.$pages.'</a></li>';
             }
 
             // prev
             if($current!=1 && $sections > 0)
             {
-                echo '<li><a href="'.$site_url.($current-1).'">'.__('Prev', 'catalog').'</a></li>';
+                $content .= '<li><a href="'.$site_url.($current-1).'">'.__('Prev', 'dev').'</a></li>';
             }
-            echo '</ul></div>';
+            $content .= '</ul></div>';
         }
+        return $content;
     }
 }

@@ -68,5 +68,11 @@ return array(
         'Edit catalog: :catalog'	=> 'Редактирование каталога: :catalog',
         'More'  => 'Подробнее',
         'Hits count' => 'Количество просмотров: ',
+        'Add video' => 'Добавить видео',
+        'Add images' => 'Добавить картинки',
+        'Start upload' => 'Начать загрузку',
+        'Select image' => 'Выбрать изображение',
+        'Change' => 'Изменить',
+        'Remove' => 'Удалить',
     )
 );

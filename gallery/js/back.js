@@ -94,9 +94,9 @@ $(function () {
                 alert("Please select item(s) to delete.");
             } else {
                 $.ajax({
-                    url: 'index.php?id=gallery&action=delete&t=' + $.now(),
+                    url: 'index.php?id=gallery&delete=true&t=' + $.now(),
                     type: "POST",
-                    data: {token: csrf, items: items, gid: gid},
+                    data: {token: csrf, items: items},
                     success: function (text) {
                         window.location = 'index.php?id=gallery&action=items&gallery_id='+ $('#gid').val();
                     },
@@ -114,14 +114,12 @@ $(function () {
     });
 
     $("input[data-action=checked]").on("click", function () {
-        if($(this).attr('checked')){
-            $('input[type=checkbox]').attr('checked', true);
+        if($(this).prop('checked')){
+            $('input[name="key"]').prop('checked',true);
         } else {
-            $('input[type=checkbox]').attr('checked', false);
+            $('input[name="key"]').prop('checked',false);
         }
     });
-
-
 
     $("span[data-action=image]").on("click", function () {
         var uid = $(this).attr('data-key');
@@ -131,8 +129,9 @@ $(function () {
             type: "POST",
             dataType: "json",
             success: function (result) {
-                $('#gallery_id').val(result.id);
+                $('#uid').val(result.id);
                 $('#gallery_title').val(result.title);
+                $('#gallery_media').val(result.media);
                 $('#gallery_desc').val(result.desc);
                 $('#imgModal').modal('show');
             },
@@ -140,6 +139,10 @@ $(function () {
                 alert("Error '" + jqXhr.status + "' (textStatus: '" + textStatus + "', errorThrown: '" + errorThrown + "')");
             }
         });
+    });
+
+    $("span[data-action=add_media]").on("click", function () {
+        $('#imgModal').modal('show');
     });
 
 });

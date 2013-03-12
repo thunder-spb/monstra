@@ -1,5 +1,5 @@
 /*
- * jQuery File Upload Plugin 5.21.1
+ * jQuery File Upload Plugin 5.21.3
  * https://github.com/blueimp/jQuery-File-Upload
  *
  * Copyright 2010, Sebastian Tschan
@@ -32,21 +32,6 @@
     // but not non-multipart XHR file uploads:
     $.support.xhrFileUpload = !!(window.XMLHttpRequestUpload && window.FileReader);
     $.support.xhrFormDataFileUpload = !!window.FormData;
-
-    // The form.elements propHook is added to filter serialized elements
-    // to not include file inputs in jQuery 1.9.0.
-    // This hooks directly into jQuery.fn.serializeArray.
-    // For more info, see http://bugs.jquery.com/ticket/13306
-    $.propHooks.elements = {
-        get: function (form) {
-            if ($.nodeName(form, 'form')) {
-                return $.grep(form.elements, function (elem) {
-                    return !$.nodeName(elem, 'input') || elem.type !== 'file';
-                });
-            }
-            return null;
-        }
-    };
 
     // The fileupload widget listens for change events on file input fields defined
     // via fileInput setting and paste or drop events of the given dropZone.
@@ -648,8 +633,8 @@
         },
 
         _onDone: function (result, textStatus, jqXHR, options) {
-            if (!this._isXHRUpload(options) || !options.loaded ||
-                    options.loaded < options.total) {
+            if (!options.uploadedBytes && (!this._isXHRUpload(options) ||
+                    !options.loaded || options.loaded < options.total)) {
                 var total = this._getTotal(options.files) || 1;
                 // Create a progress event for each iframe load,
                 // or if there has been no progress event with

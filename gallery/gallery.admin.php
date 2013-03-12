@@ -6,16 +6,16 @@ Action::add('admin_themes_extra_index_template_actions','GalleryAdmin::formCompo
 Action::add('admin_themes_extra_actions','GalleryAdmin::formComponentSave');
 Action::add('admin_pre_render','GalleryAdmin::ajaxSave');
 
-//Stylesheet::add('plugins/gallery/content/admin.css', 'backend', 11);
-
 class GalleryAdmin extends Backend {
     public static $folder = null; // gallery table @object
     public static $items = null; // gallery table @object
     public static $resize = null;
+    public static $media = null;
+    public static $opt = array();
 
     public static function main() {
 
-        $site_url = Option::get('siteurl');
+        GalleryAdmin::$opt['site_url'] = Option::get('siteurl');
         $errors = array();
 
         GalleryAdmin::$resize = array(
@@ -25,13 +25,42 @@ class GalleryAdmin extends Backend {
             'stretch' => __('Similarly with the expansion', 'gallery'),
         );
 
+        GalleryAdmin::$media = array(
+            ''              => 'Image',
+            'youtube'       => 'Youtube',
+            'vimeo'         => 'Vimeo',
+            'metacafe'      => 'Metacafe',
+            'dailymotion'   => 'Dailymotion',
+            'twitvid'       => 'Twitvid',
+            'twitpic'       => 'Twitpic',
+            'instagram'     => 'Instagram',
+        );
+
         GalleryAdmin::$items = new Table('gal_items');
         GalleryAdmin::$folder = new Table('gal_folder');
 
-        Action::run('admin_gallery_extra_actions');
+        GalleryAdmin::$opt['dir'] = ROOT . DS . 'public' . DS . 'uploads' . DS . 'gallery' . DS;
+        GalleryAdmin::$opt['url'] = GalleryAdmin::$opt['site_url'] . 'public/uploads/gallery/';
 
-        $dir = ROOT . DS . 'public' . DS . 'uploads' . DS . 'gallery' . DS;
-        $url = $site_url . 'public/uploads/gallery/';
+        /**
+         *  Upload image
+         */
+        if (Request::post('upload_file')) {
+            if (Security::check(Request::post('csrf'))) {
+                $uid = (int)Request::post('id');
+                if ($_FILES['file']) {
+                    if($_FILES['file']['type'] == 'image/jpeg' ||
+                        $_FILES['file']['type'] == 'image/png' ||
+                        $_FILES['file']['type'] == 'image/gif') {
+
+                        $img  = Image::factory($_FILES['file']['tmp_name']);
+                        $options = GalleryAdmin::$folder->select('[id='.$uid.']', null);
+                        DevAdmin::ReSize($img, GalleryAdmin::$opt['dir'], 'album_'.$uid.'.jpg', $options);
+                    }
+                }
+                Request::redirect('index.php?id=gallery&action=edit&gallery_id='.$uid);
+            } else { die('csrf detected!'); }
+        }
 
         if (Request::get('action')) {
             switch (Request::get('action')) {
@@ -54,6 +83,8 @@ class GalleryAdmin extends Backend {
                                 'gallery_resize' => (string)Request::post('resize')
                             ));
 
+                            File::setContent(STORAGE . DS . 'gallery' . DS .'album.0.txt', XML::safe(Request::post('editor')));
+
                             Notification::set('success', __('Your changes have been saved', 'gallery'));
 
                             Request::redirect('index.php?id=gallery');
@@ -61,7 +92,6 @@ class GalleryAdmin extends Backend {
                     }
 
                     View::factory('gallery/views/backend/settings')->display();
-                    Action::run('admin_gallery_extra_settings_template');
                     break;
 
                 case "items":
@@ -69,18 +99,42 @@ class GalleryAdmin extends Backend {
                         if (Security::check(Request::post('csrf'))) {
                             $data = array(
                                 'title'         => Request::post('gallery_title'),
-                                'description'   => Request::post('gallery_desc')
+                                'description'   => Request::post('gallery_desc'),
+                                'media'         => Request::post('gallery_media')
                             );
 
-                            $id = (int)Request::post('gallery_id');
+                            $id = (int)Request::post('uid');
+                            $gid = Request::post('gid');
 
-                            if(GalleryAdmin::$items->updateWhere('[id='.$id.']', $data)) {
-                                Notification::set('success', __('Your changes to the album <i>:album</i> have been saved.', 'gallery', array(':album' => Request::post('gallery_title', '-', true))));
+                            if ($id == 0){
+                                $data = array(
+                                    'title'         => Request::post('gallery_title'),
+                                    'description'   => Request::post('gallery_desc'),
+                                    'media'         => Request::post('gallery_media'),
+                                    'date'          => time(),
+                                    'author'        => Session::get('user_login'),
+                                    'guid'          => $gid
+                                );
+
+                                if(GalleryAdmin::$items->insert($data)) {
+                                    Notification::set('success', __('Your item <i>:item</i> have been added.', 'gallery', array(':item' => Request::post('gallery_title'))));
+                                }
+                                else {
+                                    Notification::set('success', __('Your item <i>:item</i> have been not added.', 'gallery', array(':item' => Request::post('gallery_title'))));
+                                }
                             }
                             else {
-                                Notification::set('error', __('Your changes to the album <i>:album</i> have been saved.', 'gallery', array(':album' => Request::post('gallery_title', '-', true))));
+                                if(GalleryAdmin::$items->updateWhere('[id='.$id.']', $data)) {
+                                    GalleryAdmin::SetMedia(Request::post('gallery_media'), $gid, $id);
+
+                                    Notification::set('success', __('Your changes to the album <i>:album</i> have been saved.', 'gallery', array(':album' => Request::post('gallery_title', '-', true))));
+                                }
+                                else {
+                                    Notification::set('error', __('Your changes to the album <i>:album</i> have been not saved.', 'gallery', array(':album' => Request::post('gallery_title', '-', true))));
+                                }
                             }
-                            Request::redirect('index.php?id=gallery&action=items&gallery_id='.(int)Request::post('guid'));
+
+                            Request::redirect('index.php?id=gallery&action=items&gallery_id='.$gid);
                         } else { die('csrf detected!'); }
                     }
 
@@ -88,33 +142,27 @@ class GalleryAdmin extends Backend {
                     $id = (int)Request::get('gallery_id');
                     $records_all = GalleryAdmin::$items->select('[guid="'.$id.'"]', 'all', null, array('title', 'description', 'date', 'author'));
                     $album = GalleryAdmin::$folder->select('[id='.$id.']', null);
-                    $count_gallery = count($records_all);
-                    $pages = ceil($count_gallery/$limit);
+                    GalleryAdmin::$opt['id'] = $album['id'];
+                    GalleryAdmin::$opt['title'] = $album['title'];
+                    $cnt_all = count($records_all);
+                    GalleryAdmin::$opt['pages'] = ceil($cnt_all/$limit);
 
-                    $page = (Request::get('page')) ? (int)Request::get('page') : 1;
-                    $sort = (Request::get('sort')) ? (string)Request::get('sort') : 'date';
-                    $order = (Request::get('order') and Request::get('order')=='ASC') ? 'ASC' : 'DESC';
+                    GalleryAdmin::$opt['page'] = (Request::get('page')) ? (int)Request::get('page') : 1;
+                    GalleryAdmin::$opt['sort'] = (Request::get('sort')) ? (string)Request::get('sort') : 'date';
+                    GalleryAdmin::$opt['order'] = (Request::get('order') and Request::get('order')=='ASC') ? 'ASC' : 'DESC';
 
-                    if ($page < 1) { $page = 1; }
-                    elseif ($page > $pages) { $page = $pages; }
+                    if (GalleryAdmin::$opt['page'] < 1) { GalleryAdmin::$opt['page'] = 1; }
+                    elseif (GalleryAdmin::$opt['page'] > GalleryAdmin::$opt['pages']) { GalleryAdmin::$opt['page'] = GalleryAdmin::$opt['pages']; }
 
-                    $start = ($page-1)*$limit;
+                    $start = (GalleryAdmin::$opt['page']-1)*$limit;
 
-                    $records_sort = Arr::subvalSort($records_all, $sort, $order);
-                    if($count_gallery>0) $records = array_slice($records_sort, $start, $limit);
+                    $records_sort = Arr::subvalSort($records_all, GalleryAdmin::$opt['sort'], GalleryAdmin::$opt['order']);
+                    if($cnt_all>0) $records = array_slice($records_sort, $start, $limit);
                     else $records = array();
 
                     View::factory('gallery/views/backend/items')
-                        ->assign('gallery_list', $records)
-                        ->assign('gallery_id', $album['id'])
-                        ->assign('gallery_title', $album['title'])
-                        ->assign('site_url', $site_url)
-                        ->assign('current_page', $page)
-                        ->assign('pages_count', $pages)
-                        ->assign('sort', $sort)
-                        ->assign('order', $order)
-                        ->assign('dir', $dir)
-                        ->assign('url', $url)
+                        ->assign('items', $records)
+                        ->assign('opt', GalleryAdmin::$opt)
                         ->display();
                     break;
 
@@ -143,11 +191,10 @@ class GalleryAdmin extends Backend {
                                 if(GalleryAdmin::$folder->insert($data)) {
 
                                     $last_id = GalleryAdmin::$folder->lastId();
+                                    File::setContent(STORAGE . DS . 'gallery' . DS .'album.'.$last_id.'.txt', XML::safe(Request::post('editor')));
 
                                     Notification::set('success', __('New album <i>:album</i> have been added.', 'gallery', array(':album' => Security::safeName($data['title'], '-', true))));
                                 }
-
-                                Action::run('admin_album_action_add');
 
                                 if (Request::post('add_album')) {
                                     Request::redirect('index.php?id=gallery&action=edit&gallery_id='.$last_id);
@@ -158,17 +205,17 @@ class GalleryAdmin extends Backend {
                         } else { die('csrf detected!'); }
                     }
 
-                    $post['slug']          = '';
-                    $post['title']         = '';
-                    $post['keywords']      = '';
-                    $post['description']   = '';
-                    $post['w']             = Option::get('gallery_w');
-                    $post['h']             = Option::get('gallery_h');
-                    $post['wmax']          = Option::get('gallery_wmax');
-                    $post['hmax']          = Option::get('gallery_hmax');
-                    $post['limit']         = Option::get('gallery_limit');
-                    $post['resize']        = Option::get('gallery_resize');
-                    $post['sections']      = '0';
+                    $post['slug']          = (Request::post('gallery_slug'))            ? Request::post('gallery_slug')             : '';
+                    $post['title']         = (Request::post('gallery_title'))           ? Request::post('gallery_title')            : '';
+                    $post['keywords']      = (Request::post('gallery_keywords'))        ? Request::post('gallery_keywords')         : '';
+                    $post['description']   = (Request::post('gallery_description'))     ? Request::post('gallery_description')      : '';
+                    $post['limit']         = (Request::post('gallery_limit'))           ? Request::post('gallery_limit')            : Option::get('gallery_limit');
+                    $post['sections']      = (Request::post('gallery_sections'))        ? Request::post('gallery_sections')         : '0';
+                    $post['w']             = ((int)Request::post('width_thumb'))        ? (int)Request::post('width_thumb')         : Option::get('gallery_w');
+                    $post['h']             = ((int)Request::post('height_thumb'))       ? (int)Request::post('width_thumb')         : Option::get('gallery_h');
+                    $post['wmax']          = ((int)Request::post('width_orig'))         ? (int)Request::post('width_thumb')         : Option::get('gallery_wmax');
+                    $post['hmax']          = ((int)Request::post('height_orig'))        ? (int)Request::post('width_thumb')         : Option::get('gallery_hmax');
+                    $post['resize']        = ((int)Request::post('resize'))             ? (int)Request::post('resize')              : Option::get('gallery_resize');
 
                     View::factory('gallery/views/backend/add')
                         ->assign('post', $post)
@@ -199,13 +246,13 @@ class GalleryAdmin extends Backend {
                                         'parent'        => 0
                                     );
 
-                                    $id = (int)Request::post('gallery_id');
+                                    $id = (int)Request::get('gallery_id');
 
                                     if(GalleryAdmin::$folder->updateWhere('[id='.$id.']', $data)) {
+                                        File::setContent(STORAGE . DS . 'gallery' . DS .'album.'.$id.'.txt', XML::safe(Request::post('editor')));
+
                                         Notification::set('success', __('Your changes to the album <i>:album</i> have been saved.', 'gallery', array(':album' => Security::safeName(Request::post('gallery_title'), '-', true))));
                                     }
-
-                                    Action::run('admin_album_action_edit');
 
                                     if (Request::post('save_album_and_exit')) {
                                         Request::redirect('index.php?id=gallery');
@@ -216,17 +263,21 @@ class GalleryAdmin extends Backend {
                             } else { die('csrf detected!'); }
                         }
 
-                        $id = (int)Request::get('gallery_id');
-                        $data = GalleryAdmin::$folder->select('[id="'.$id.'"]', null);
+                        $post['id'] = $id = (int)Request::get('gallery_id');
+                        $data = GalleryAdmin::$folder->select('[id="'.$post['id'].'"]', null);
 
                         if (Request::post('reload_album')) {
-                            $items = GalleryAdmin::$items->select('[guid="'.$id.'"]', 'all', null, array('id'));
+                            $pic = GalleryAdmin::$items->select('[guid="'.$post['id'].'"]', 'all', null, array('id'));
 
-                            if (count($items) > 0)
+                            if (count($pic) > 0)
                             {
-                                foreach($items as $item)
+                                $album = GalleryAdmin::$folder->select('[id="'.Request::post('gallery_id').'"]', null);
+                                foreach($pic as $item)
                                 {
-                                    GalleryAdmin::ReSize($dir.$item['id'].'.jpg', $dir.'thumbnail'.DS.$item['id'].'.jpg', $data);
+                                    if (File::exists(GalleryAdmin::$opt['dir'].$item['id'].'.jpg')){
+                                        $img = Image::factory(GalleryAdmin::$opt['dir'].$item['id'].'.jpg');
+                                        DevAdmin::ReSize($img, GalleryAdmin::$opt['dir'], $item['id'].'.jpg', $album);
+                                    }
                                 }
                                 Notification::set('success', __('Resize image to the album <i>:album</i> success.', 'gallery', array(':album' => $data['title'])));
                             }
@@ -246,8 +297,8 @@ class GalleryAdmin extends Backend {
                             $post['resize']        = ((int)Request::post('resize'))             ? (int)Request::post('resize')              : $data['resize'];
 
                             View::factory('gallery/views/backend/edit')
-                                ->assign('gallery_id', $id)
                                 ->assign('post', $post)
+                                ->assign('opt', GalleryAdmin::$opt)
                                 ->assign('errors', $errors)
                                 ->display();
                         }
@@ -268,8 +319,8 @@ class GalleryAdmin extends Backend {
                                     foreach($item as $row)
                                     {
                                         if (GalleryAdmin::$items->deleteWhere('[id='.$row['id'].']')) {
-                                            File::delete($dir.$row['id'].'.jpg');
-                                            File::delete($dir. 'thumbnail'. DS .$row['id'].'.jpg');
+                                            File::delete(GalleryAdmin::$opt['dir'].$row['id'].'.jpg');
+                                            File::delete(GalleryAdmin::$opt['dir']. 'thumbnail'. DS .$row['id'].'.jpg');
                                         }
                                     }
                                 }
@@ -277,24 +328,11 @@ class GalleryAdmin extends Backend {
                                     array(':album' => Html::toText($data['title']))));
                             }
 
-                            Action::run('admin_gallery_action_delete_album');
                             Request::redirect('index.php?id=gallery');
 
                         } else { die('csrf detected!'); }
                     }
-
-                    if (is_array(Request::post('items'))) {
-                        if (Security::check(Request::post('token'))) {
-
-                            foreach(Request::post('items') as $row)
-                            {
-                                if (GalleryAdmin::$items->deleteWhere('[id='.$row.']')) {
-                                    File::delete($dir.$row.'.jpg');
-                                    File::delete($dir. 'thumbnail'. DS .$row.'.jpg');
-                                }
-                            }
-                        } else { die('csrf detected!'); }
-                    }
+                    die('no action');
                     break;
             }
 
@@ -302,29 +340,27 @@ class GalleryAdmin extends Backend {
             $limit = Option::get('gallery_limit_admin');
             $records_all = GalleryAdmin::$folder->select(null, 'all', null, array('title', 'slug'));
             $count_gallery = count($records_all);
-            $pages = ceil($count_gallery/$limit);
+            GalleryAdmin::$opt['pages'] = ceil($count_gallery/$limit);
 
-            $page = (Request::get('page')) ? (int)Request::get('page') : 1;
-//			$sort = (Request::get('sort')) ? (string)Request::get('sort') : 'date';
-//			$order = (Request::get('order') and Request::get('order')=='ASC') ? 'ASC' : 'DESC';
+            GalleryAdmin::$opt['page'] = (Request::get('page')) ? (int)Request::get('page') : 1;
+//			$opt['sort'] = (Request::get('sort')) ? (string)Request::get('sort') : 'date';
+//			$opt['order'] = (Request::get('order') and Request::get('order')=='ASC') ? 'ASC' : 'DESC';
 
-            if ($page < 1) { $page = 1; }
-            elseif ($page > $pages) { $page = $pages; }
+            if (GalleryAdmin::$opt['page'] < 1) { GalleryAdmin::$opt['page'] = 1; }
+            elseif (GalleryAdmin::$opt['page'] > GalleryAdmin::$opt['pages']) { GalleryAdmin::$opt['page'] = GalleryAdmin::$opt['pages']; }
 
-            $start = ($page-1)*$limit;
+            $start = (GalleryAdmin::$opt['page']-1)*$limit;
 
-//			$records_sort = Arr::subvalSort($records_all, $sort, $order);
+//			$records_sort = Arr::subvalSort($records_all, $opt['sort'], $opt['order']);
             $records_sort = $records_all;
             if($count_gallery>0) $records = array_slice($records_sort, $start, $limit);
             else $records = array();
 
             View::factory('gallery/views/backend/index')
-                ->assign('gallery_list', $records)
-                ->assign('site_url', $site_url)
-                ->assign('current_page', $page)
-                ->assign('pages_count', $pages)
-//				->assign('sort', $sort)
-//				->assign('order', $order)
+                ->assign('items', $records)
+                ->assign('opt', GalleryAdmin::$opt)
+//				->assign('sort', $opt['sort'])
+//				->assign('order', $opt['order'])
                 ->display();
         }
     }
@@ -333,25 +369,26 @@ class GalleryAdmin extends Backend {
      *  Ajax save
      */
         public static function ajaxSave() {
-            GalleryAdmin::$items = new Table('gal_items');
-            GalleryAdmin::$folder = new Table('gal_folder');
+            $items = new Table('gal_items');
+            $folder = new Table('gal_folder');
 
             $gid = (int)Request::get('guid');
-            $dir = ROOT . DS . 'public' . DS . 'uploads' . DS . 'gallery' . DS;
+            $opt['dir'] = ROOT . DS . 'public' . DS . 'uploads' . DS . 'gallery' . DS;
 
             // save settings
             if (Request::get('upload') == 'files') {
                 require(ROOT . DS . 'plugins' . DS . 'dev' . DS . 'UploadHandler.php');
-                $site_url = Option::get('siteurl');
-                $url = $site_url . 'public/uploads/gallery/';
+                $opt['site_url'] = Option::get('siteurl');
+                $opt['url'] = $opt['site_url'] . 'public/uploads/gallery/';
                 $opt = array(
-                    'upload_dir' => $dir,
-                    'upload_url' => $url
+                    'upload_dir' => $opt['dir'],
+                    'upload_url' => $opt['url']
                 );
 
                 $upload_handler = new UploadHandler($opt);
                 exit();
             }
+
             if (Request::get('rename')) {
                 $users = new Table('users');
 
@@ -370,16 +407,17 @@ class GalleryAdmin extends Backend {
                 $data = array(
                     'title'        => date("Ymd_His"),
                     'description'  => '',
+                    'media'        => '',
                     'date'         => time(),
                     'author'       => $author,
                     'guid'         => $gid
                 );
 
-                $folder = GalleryAdmin::$folder->select('[id='.$gid.']', null);
+                $options = $folder->select('[id='.$gid.']', null);
 
-                if(GalleryAdmin::$items->insert($data)) {
+                if($items->insert($data)) {
 
-                    $last_id = GalleryAdmin::$items->lastId();
+                    $last_id = $items->lastId();
                     $file = Request::post('file');
                     $type = Request::post('type');
 
@@ -398,22 +436,43 @@ class GalleryAdmin extends Backend {
                         break;
                     }
 
-                    File::rename($dir.$file, $dir.$last_id.$type);
-                    File::rename($dir . 'thumbnail'. DS .$file, $dir . 'thumbnail'. DS .$last_id.$type);
+                    File::rename($opt['dir'].$file, $opt['dir'].$last_id.$type);
+                    File::rename($opt['dir'] . 'thumbnail'. DS .$file, $opt['dir'] . 'thumbnail'. DS .$last_id.$type);
 
-                    GalleryAdmin::ReSize($dir.$last_id.$type, $dir.'thumbnail'.DS.$last_id.$type, $folder);
+                    $img = Image::factory($opt['dir'].$last_id.$type);
+
+                    DevAdmin::ReSize($img, $opt['dir'], $last_id.$type, $options);
                 }
 
-                $data = GalleryAdmin::$folder->select('[id="'.$gid.'"]', null);
+                $data = $folder->select('[id="'.$gid.'"]', null);
                 Notification::set('success', __('Your items to <i>:album</i> have been added.', 'gallery', array(':album' => $data['title'])));
                 exit();
             }
-            if (Request::get('image') == 'edit') {
-                $item = GalleryAdmin::$items->select('[id="'.$gid.'"]', 'all', null, array('title', 'description'));
 
-                $json_data = array ('id'=>$gid,'title'=>$item[0]['title'],'desc'=>$item[0]['description']);
+            if (Request::get('image') == 'edit') {
+                $item = $items->select('[id="'.$gid.'"]', 'all', null, array('title', 'description', 'media'));
+
+                $json_data = array ('id'=>$gid,'title'=>$item[0]['title'],'desc'=>$item[0]['description'],'media'=>$item[0]['media']);
                 echo json_encode($json_data);
                 exit();
+            }
+
+            if (Request::get('delete'))
+            {
+                if (is_array(Request::post('items'))) {
+                    if (Security::check(Request::post('token'))) {
+
+                        foreach(Request::post('items') as $row)
+                        {
+                            if ($items->deleteWhere('[id='.$row.']')) {
+                                File::delete($opt['dir'].$row.'.jpg');
+                                File::delete($opt['dir']. 'thumbnail'. DS .$row.'.jpg');
+                            }
+                        }
+                        die('test');
+                    } else { die('csrf detected!'); }
+                }
+                exit('no action');
             }
         }
 
@@ -451,39 +510,115 @@ class GalleryAdmin extends Backend {
         );
     }
 
-    private static function ReSize($file, $thumb, $folder)
+    private static function SetMedia($media, $gid, $id)
     {
-        $img  = Image::factory($file);
+        $url = parse_url($media);
+        $img_url = '';
 
-        $wmax   = (int)$folder['wmax'];
-        $hmax   = (int)$folder['hmax'];
-        $width  = (int)$folder['w'];
-        $height = (int)$folder['h'];
-        $resize = $folder['resize'];
-        $ratio = $width/$height;
+        switch($url['host'])
+        {
+            case 'www.youtube.com':
+                $img_url = GalleryAdmin::youtube($media);
+                break;
+            case 'youtube.com':
+                $img_url = GalleryAdmin::youtube($media);
+                break;
 
-        if ($img->width > $wmax or $img->height > $hmax) {
-            if ($img->height > $img->width) {
-                $img->resize($wmax, $hmax, Image::HEIGHT);
-            } else {
-                $img->resize($wmax, $hmax, Image::WIDTH);
-            }
-        }
-        $img->save($file);
+            case 'www.vimeo.com':
+                $img_url = GalleryAdmin::vimeo($media);
+                break;
+            case 'vimeo.com':
+                $img_url = GalleryAdmin::vimeo($media);
+                break;
 
-        switch ($resize) {
-            case 'width' :   $img->resize($width, $height, Image::WIDTH);  break;
-            case 'height' :  $img->resize($width, $height, Image::HEIGHT); break;
-            case 'stretch' : $img->resize($width, $height); break;
-            default :
-                // crop
-                if (($img->width/$img->height) > $ratio) {
-                    $img->resize($width, $height, Image::HEIGHT)->crop($width, $height, round(($img->width-$width)/2),0);
-                } else {
-                    $img->resize($width, $height, Image::WIDTH)->crop($width, $height, 0, 0);
-                }
+            case 'www.metacafe.com':
+                $img_url = GalleryAdmin::metacafe($media);
+                break;
+            case 'metacafe.com':
+                $img_url = GalleryAdmin::metacafe($media);
+                break;
+
+            case 'www.dailymotion.com':
+                $img_url = GalleryAdmin::dailymotion($media);
+                break;
+            case 'dailymotion.com':
+                $img_url = GalleryAdmin::dailymotion($media);
+                break;
+
+            case 'www.twitpic.com':
+                $img_url = GalleryAdmin::twitpic($media);
+                break;
+            case 'twitpic.com':
+                $img_url = GalleryAdmin::twitpic($media);
+                break;
+
+            case 'www.instagr.am':
+                $img_url = GalleryAdmin::instagram($media);
+                break;
+            case 'instagr.am':
+                $img_url = GalleryAdmin::instagram($media);
                 break;
         }
-        $img->save($thumb);
+
+        if ($img_url != '')
+        {
+            $file = file_get_contents($img_url);
+            File::setContent(STORAGE . DS . 'gallery' . DS .'test.jpg', $file);
+            $img = Image::factory(STORAGE . DS . 'gallery' . DS .'test.jpg', $file);
+            $options = GalleryAdmin::$folder->select('[id='.$gid.']', null);
+            DevAdmin::ReSize($img, GalleryAdmin::$opt['dir'], $id.'.jpg', $options);
+        }
+    }
+
+    private static function youtube($media)
+    {
+        preg_match("#(?<=v=)[a-zA-Z0-9-]+(?=&)|(?<=v\/)[^&\n]+(?=\?)|(?<=v=)[^&\n]+|(?<=youtu.be/)[^&\n]+#", $media, $matches);
+        if ($matches[0] != '')
+            return 'http://img.youtube.com/vi/'.$matches[0].'/0.jpg';
+        return '';
+    }
+
+    private static function vimeo($media)
+    {
+        preg_match('#http://(?:\w+.)?vimeo.com/(?:video/|moogaloop\.swf\?clip_id=|)(\w+)#i', $media, $matches);
+        if ($matches[1] != '')
+        {
+            $hash = unserialize(file_get_contents("http://vimeo.com/api/v2/video/$matches[1].php"));
+            return $hash[0]['thumbnail_medium'];
+        }
+        return '';
+    }
+
+    private static function metacafe($media)
+    {
+        preg_match('#http://(?:www\.)?metacafe.com/(?:watch|fplayer)/(\w+)/#i', $media, $matches);
+        if ($matches[1] != '')
+            return 'http://www.metacafe.com/thumb/'.$matches[1].'.jpg';
+        return '';
+    }
+
+    private static function dailymotion($media)
+    {
+        preg_match('#http://(?:\w+.)?dailymotion.com/video/([A-Za-z0-9]+)#s', $media, $matches);
+        if ($matches[1] != '')
+        {
+            $hash = json_decode(file_get_contents("https://api.dailymotion.com/video/$matches[1]?fields=thumbnail_large_url"));
+            return $hash->thumbnail_large_url;
+        }
+        return '';
+    }
+
+    private static function twitpic($media)
+    {
+        preg_match('#http://(?:\w+.)?twitpic.com/([A-Za-z0-9]+)#i', $media, $matches);
+        if ($matches[1] != '')
+            return 'http://twitpic.com/show/thumb/'.$matches[1];
+        return '';
+    }
+
+    private static function instagram($media)
+    {
+        $hash = json_decode(file_get_contents("http://api.instagram.com/oembed?url=".$media));
+        return $hash->url;
     }
 }

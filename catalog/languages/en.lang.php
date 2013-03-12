@@ -67,5 +67,10 @@
             'Edit catalog: :catalog'	=> 'Edit catalog: :catalog',
             'More'  => 'More',
             'Hits count' => 'Hits count: ',
+            'Add images' => 'Add images',
+            'Start upload' => 'Start upload',
+            'Select image' => 'Select image',
+            'Change' => 'Change',
+            'Remove' => 'Remove',
         )
     );

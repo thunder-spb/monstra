@@ -1,14 +1,13 @@
 <div class="row-fluid">
     <div class="span12">
-        <div id="res"></div><div id="pro"></div>
-        <h2><a href="<?php echo Url::base(); ?>/index.php?id=gallery"><?php echo __('Gallery', 'gallery'); ?></a>: <?php echo $gallery_title ?></h2><br />
+        <h2><a href="<?php echo Url::base(); ?>/index.php?id=gallery"><?php echo __('Gallery', 'gallery'); ?></a>: <?php echo $opt['title'] ?></h2><br />
         <?php
         if (Notification::get('success')) Alert::success(Notification::get('success'));
         if (Notification::get('error')) Alert::success(Notification::get('error'));
         echo (
             Form::open(null, array('enctype' => 'multipart/form-data', 'id' => 'fileupload')).
             Form::hidden('csrf', Security::token()).
-            Form::hidden('gid', $gallery_id).
+            Form::hidden('gid', $opt['id']).
             Form::hidden('upf', '0')
         );
         ?>
@@ -16,9 +15,13 @@
             <div class="fileupload-buttonbar">
                 <div class="span7">
                 <!-- The fileinput-button span is used to style the file input field as button -->
+                <span class="btn btn-info" data-action="add_media">
+                    <i class="icon-plus icon-white"></i>
+                    <span><?php echo __('Add video', 'gallery'); ?></span>
+                </span>
                 <span class="btn btn-success fileinput-button">
                     <i class="icon-plus icon-white"></i>
-                    <span><?php echo __('Add files...', 'gallery'); ?></span>
+                    <span><?php echo __('Add images', 'gallery'); ?></span>
                     <input type="file" name="files[]" multiple>
                 </span>
                 <span class="btn btn-primary upload">
@@ -39,11 +42,11 @@
         <ul class="breadcrumb">
             <li><b><?php echo __('Sort by:', 'gallery');?></b> &nbsp;</li>
 
-            <li><a href="index.php?id=gallery&action=items&gallery_id=<?php echo $gallery_id;?>&page=<?php echo $current_page;?>&sort=date&order=<?php echo $order;?>"<?php if($sort=='date') echo ' class="active"';?>><?php echo __('by date', 'gallery');?></a> <span class="divider">/</span></li>
-            <li><a href="index.php?id=gallery&action=items&gallery_id=<?php echo $gallery_id;?>&page=<?php echo $current_page;?>&sort=id&order=<?php echo $order;?>"<?php if($sort=='id') echo ' class="active"';?>><?php echo __('by number', 'gallery');?></a> <span class="divider">/</span></li>
+            <li><a href="<?php echo Url::base(); ?>/index.php?id=gallery&action=items&gallery_id=<?php echo $opt['id'];?>&page=<?php echo $opt['page'];?>&sort=date&order=<?php echo $opt['order'];?>"<?php if($opt['sort']=='date') echo ' class="active"';?>><?php echo __('by date', 'gallery');?></a> <span class="divider">/</span></li>
+            <li><a href="<?php echo Url::base(); ?>/index.php?id=gallery&action=items&gallery_id=<?php echo $opt['id'];?>&page=<?php echo $opt['page'];?>&sort=id&order=<?php echo $opt['order'];?>"<?php if($opt['sort']=='id') echo ' class="active"';?>><?php echo __('by number', 'gallery');?></a> <span class="divider">/</span></li>
             <li>&nbsp; <span class="divider">/</span></li>
-            <li><a href="index.php?id=gallery&action=items&gallery_id=<?php echo $gallery_id;?>&page=<?php echo $current_page;?>&sort=<?php echo $sort;?>&order=ASC"<?php if($order=='ASC') echo ' class="active"';?>><?php echo __('by ASC', 'gallery');?></a> <span class="divider">/</span></li>
-            <li><a href="index.php?id=gallery&action=items&gallery_id=<?php echo $gallery_id;?>&page=<?php echo $current_page;?>&sort=<?php echo $sort;?>&order=DESC"<?php if($order=='DESC') echo ' class="active"';?>><?php echo __('by DESC', 'gallery');?></a> <span class="divider">/</span></li>
+            <li><a href="<?php echo Url::base(); ?>/index.php?id=gallery&action=items&gallery_id=<?php echo $opt['id'];?>&page=<?php echo $opt['page'];?>&sort=<?php echo $opt['sort'];?>&order=ASC"<?php if($opt['order']=='ASC') echo ' class="active"';?>><?php echo __('by ASC', 'gallery');?></a> <span class="divider">/</span></li>
+            <li><a href="<?php echo Url::base(); ?>/index.php?id=gallery&action=items&gallery_id=<?php echo $opt['id'];?>&page=<?php echo $opt['page'];?>&sort=<?php echo $opt['sort'];?>&order=DESC"<?php if($opt['order']=='DESC') echo ' class="active"';?>><?php echo __('by DESC', 'gallery');?></a> <span class="divider">/</span></li>
         </ul>
 
 
@@ -72,16 +75,16 @@
             </tr>
             </thead>
             <tbody>
-            <?php if (count($gallery_list) != 0): ?>
-                <?php foreach ($gallery_list as $row): ?>
+            <?php if (count($items) > 0): ?>
+                <?php foreach ($items as $row): ?>
                 <tr>
                     <td><?php echo $row['title'];//Html::anchor(Html::toText($row['name']), $site_url.'gallery/'.$row['id'].'/'.$row['slug'], array('target' => '_blank')); ?></td>
                     <td><?php echo $row['description']; ?></td>
                     <td><?php
-                        if (file_exists($dir.$row['id'].'.jpg'))
+                        if (file_exists($opt['dir'].$row['id'].'.jpg'))
                         {
                             ?>
-                            <a href="<?php echo $url.$row['id'].'.jpg' ?>"><img alt="" style="max-width:100px; max-height:50px;" src="<?php echo $url.'thumbnail/'.$row['id'].'.jpg' ?>"></a>
+                            <a href="<?php echo $opt['url'].$row['id'].'.jpg' ?>"><img alt="" style="max-width:100px; max-height:50px;" src="<?php echo $opt['url'].'thumbnail/'.$row['id'].'.jpg' ?>"></a>
                             <?php } ?>
                     </td>
                     <td><?php echo Date::format($row['date'], "j.n.Y"); ?></td>
@@ -104,21 +107,21 @@
             ?>
             </tbody>
         </table>
-        <?php Gallery::paginator($current_page, $pages_count, 'index.php?id=gallery&action=items&gallery_id='.$gallery_id.'&sort='.$sort.'&order='.$order.'&page=');?>
+        <?php echo Dev::paginator($opt['page'], $opt['pages'], 'index.php?id=gallery&action=items&gallery_id='.$opt['id'].'&sort='.$opt['sort'].'&order='.$opt['order'].'&page=');?>
     </div>
 </div>
 <div id="imgModal" class="modal hide fade">
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h3><?php echo __('Edit image', 'gallery'); ?></h3>
+        <h3><?php echo __('Media', 'gallery'); ?></h3>
     </div>
     <div class="modal-body">
         <?php
         echo (
             Form::open(null, array('class' => 'form_validate form-horizontal')).
             Form::hidden('csrf', Security::token()).
-            Form::hidden('gallery_id', 0).
-            Form::hidden('guid', $gallery_id).
+            Form::hidden('uid', 0).
+            Form::hidden('gid', $opt['id']).
             '<div class="control-group">'.
                 Form::label('gallery_title', __('Title', 'gallery'), array('class' => 'control-label')).
                 '<div class="controls">'.
@@ -126,6 +129,12 @@
                 '</div>'.
             '</div>'.
             '<div class="control-group">'.
+                Form::label('gallery_media', __('Media', 'gallery'), array('class' => 'control-label')).
+                '<div class="controls">'.
+                Form::input('gallery_media', '', array('class' => 'span10')).
+            '</div>'.
+            '</div>'.
+                '<div class="control-group">'.
                 Form::label('gallery_desc', __('Description', 'gallery'), array('class' => 'control-label')).
                 '<div class="controls">'.
                 Form::textarea('gallery_desc', '', array('class' => 'required span10')).
@@ -135,7 +144,7 @@
         ?>
     </div>
     <div class="modal-footer">
-        <span data-action="close" class="btn">Close</span>
+        <span data-action="close" class="btn"><?php echo __('Close', 'gallery'); ?></span>
         <?php
         echo (
             Form::submit('gallery_save_image', __('Save', 'gallery'), array('class' => 'btn btn-primary')).

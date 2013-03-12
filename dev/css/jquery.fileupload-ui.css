@@ -13,7 +13,6 @@
 .fileinput-button {
   position: relative;
   overflow: hidden;
-  float: left;
   margin-right: 4px;
 }
 .fileinput-button input {
@@ -36,7 +35,7 @@
   width: 200px;
 }
 .progress-animated .bar {
-  background: url(/plugins/dev/img/progressbar.gif) !important;
+  background: url(@site_urlplugins/dev/img/progressbar.gif) !important;
   filter: none;
 }
 .fileupload-loading {
@@ -44,7 +43,7 @@
   left: 50%;
   width: 128px;
   height: 128px;
-  background: url(/plugins/dev/img/loading.gif) center no-repeat;
+  background: url(@site_urlplugins/dev/img/loading.gif) center no-repeat;
   display: none;
 }
 .fileupload-processing .fileupload-loading {

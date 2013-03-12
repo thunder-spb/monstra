@@ -15,7 +15,7 @@
         echo Form::hidden('csrf', Security::token());
         echo (
         '<div class="row-fluid show-grid">'.
-            '<div class="span6">'.
+            '<div class="span4">'.
             Form::label('gallery_title', __('Title', 'gallery')).
             Form::input('gallery_title', $post['title'], array('class' => 'required span12')).
 
@@ -28,22 +28,24 @@
             Form::label('gallery_keywords', __('Keywords', 'gallery')).
             Form::input('gallery_keywords', $post['keywords'], array('class' => 'span12')).
 
-            Form::label('gallery_description', __('Description', 'gallery')).
-            Form::textarea('gallery_description', $post['description'], array('class' => 'span12')).
-
             '</div>'.
-            '<div class="span6">'.
-            Form::label('width_thumb', __('Width thumbnails (px)', 'gallery')).
-            Form::input('width_thumb', $post['w'], array('class' => 'required span12')).
-
-            Form::label('height_thumb', __('Height thumbnails (px)', 'gallery')).
-            Form::input('height_thumb', $post['h'], array('class' => 'required span12')).
-
+            '<div class="span4">'.
             Form::label('width_orig', __('Original width (px, max)', 'gallery')).
             Form::input('width_orig', $post['wmax'], array('class' => 'required span12')).
 
             Form::label('height_orig', __('Original height (px, max)', 'gallery')).
             Form::input('height_orig', $post['hmax'], array('class' => 'required span12')).
+
+            Form::label('gallery_description', __('Description', 'gallery')).
+            Form::textarea('gallery_description', $post['description'], array('class' => 'span12')).
+
+            '</div>'.
+            '<div class="span4">'.
+            Form::label('width_thumb', __('Width thumbnails (px)', 'gallery')).
+            Form::input('width_thumb', $post['w'], array('class' => 'required span12')).
+
+            Form::label('height_thumb', __('Height thumbnails (px)', 'gallery')).
+            Form::input('height_thumb', $post['h'], array('class' => 'required span12')).
 
             Form::label('resize', __('Resize', 'gallery')).
             Form::select('resize', GalleryAdmin::$resize, $post['resize']).
@@ -53,6 +55,7 @@
             '</div>'.
         '</div>'
         );
+        Action::run('admin_editor');
         ?>
 
         <div class="row-fluid">

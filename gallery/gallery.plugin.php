@@ -6,8 +6,10 @@
  *  @package Monstra
  *  @subpackage Plugins
  *  @copyright Copyright (C) KANekT @ http://kanekt.ru
- *  @license http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ *  @license http://creativecommons.org/licenses/by-nc/3.0/
+ *  Creative Commons Attribution-NonCommercial 3.0
  *  Donate Web Money Z104136428007 R346491122688
+ *  Yandex Money 410011782214621
  *
  */
 
@@ -16,7 +18,7 @@
 Plugin::register( __FILE__,
     __('Gallery', 'gallery'),
     __('Gallery plugin for Monstra', 'gallery'),
-    '1.3.0',
+    '1.4.0',
     'KANekT',
     'http://kanekt.ru/',
     'gallery');
@@ -46,25 +48,34 @@ class Gallery extends Frontend {
 
     public static $sort = 'date';
     public static $order = 'DESC';
+    public static $opt = array();
 
     public static function main(){
         Gallery::$items = new Table('gal_items');
         Gallery::$folder = new Table('gal_folder');
         $uri = Uri::segments();
+        Gallery::$opt['site_url'] = Option::get('siteurl');
+        Gallery::$opt['dir'] = ROOT . DS . 'public' . DS . 'uploads' . DS . 'gallery' . DS;
+        Gallery::$opt['url'] = Option::get('siteurl') . 'public/uploads/gallery/';
 
-        if (Request::get('slug') && $uri[0] == 'gallery')
-        {
-            $images = Gallery::getList(Request::get('slug'),Request::get('page'));
+        if (Request::get('slug') && $uri[0] == 'gallery') {
+            $images = Gallery::getList(Request::get('slug'),Request::get('page'), false);
             $pages = Gallery::paginator_ajax(Request::get('page'),Request::get('pages'),Request::get('slug'),Request::get('sort'),Request::get('order'));
             $json_data = array ('pages'=>$pages,'images'=>$images);
             echo json_encode($json_data);
             exit();
         }
-        else if($uri[0] == 'gallery' && count($uri) >= 0) {
-            Gallery::viewGallery($uri[1]);
+        else if($uri[0] == 'gallery' && isset($uri[1])) {
+            if (isset($uri[2])){
+                Gallery::viewItem($uri[2],$uri[1]);
+            } else {
+                Gallery::viewGallery($uri[1]);
+            }
         }
-        else
-        {
+        else if($uri[0] == 'gallery' && !isset($uri[1])) {
+            Gallery::viewIndex();
+        }
+        else {
             Gallery::error404();
         }
     }
@@ -74,6 +85,9 @@ class Gallery extends Frontend {
     */
     public static function _shortcode($attributes) {
         extract($attributes);
+        Gallery::$opt['site_url'] = Option::get('siteurl');
+        Gallery::$opt['dir'] = ROOT . DS . 'public' . DS . 'uploads' . DS . 'gallery' . DS;
+        Gallery::$opt['url'] = Option::get('siteurl') . 'public/uploads/gallery/';
 
         Gallery::$sort = (isset($sort)) ? $sort : 'date';
         Gallery::$order = (isset($order)) ? strtoupper($order) : 'DESC';
@@ -83,82 +97,128 @@ class Gallery extends Frontend {
         if (isset($list) && (isset($slug))) {
             switch ($list) {
                 case 'album':
-                    return Gallery::viewGallery($slug, true);
+                    return '<div name=image>'.Gallery::viewGallery($slug, false).'</div>';
             }
         }
         return '';
     }
 
     /**
+     * <?php echo Gallery::getGallery('test'); ?>
+     */
+    public static function getGallery($slug){
+        Gallery::$items = new Table('gal_items');
+        Gallery::$folder = new Table('gal_folder');
+        Gallery::$opt['site_url'] = Option::get('siteurl');
+        Gallery::$opt['dir'] = ROOT . DS . 'public' . DS . 'uploads' . DS . 'gallery' . DS;
+        Gallery::$opt['url'] = Option::get('siteurl') . 'public/uploads/gallery/';
+
+        return '<div name=image>'.Gallery::viewGallery($slug, false).'</div>';
+    }
+    /**
      * get Get Gallery by Slug
      */
-    public static function viewGallery($slug, $display = false){
+    private static function viewGallery($slug, $display = true){
 
-        $images = Gallery::getList($slug,1,true);
+        $page = (int)Request::get('page');
+        if ($page == 0)
+            $page = 1;
+        $images = Gallery::getList($slug,$page,$display);
 
         if ($display)
         {
-            return $images;
+            Gallery::$template = $images;
         }
         else
         {
-            Gallery::$template = $images;
+            return $images;
         }
+        return '';
     }
 
 
-    private static function getList($slug, $page, $pages = false)
+    private static function getList($slug, $page, $view = true)
     {
-        $meta = Gallery::$folder->select('[slug="'.$slug.'"]', null);
-        if (isset($meta["id"]))
+        Gallery::$meta = Gallery::$folder->select('[slug="'.$slug.'"]', null);
+        if (isset(Gallery::$meta["id"]))
         {
-            $id = $meta["id"];
-            $site_url = Option::get('siteurl');
-            $limit    = $meta['limit'];
+            $id = Gallery::$meta["id"];
+            $limit    = Gallery::$meta['limit'];
 
-            $opt["dir"] = ROOT . DS . 'public' . DS . 'uploads' . DS . 'gallery' . DS;
-            $opt["img"] = $site_url . 'public/uploads/gallery/';
-            $opt["slug"] = $slug;
+            Gallery::$opt['slug'] = $slug;
+            Gallery::$opt['title'] = Gallery::$meta['title'];
+            Gallery::$opt['id'] = $id;
 
-            $records_all = Gallery::$items->select('[guid="'.$id.'"]', 'all', null, array('id','title','description','date'));
+            $records_all = Gallery::$items->select('[guid="'.$id.'"]', 'all', null, array('id','title','description','date','media'));
 
             $count_items = count($records_all);
 
-            $opt["pages"] = ceil($count_items/$limit);
-            $opt["page"] = $page;
+            Gallery::$opt['pages'] = ceil($count_items/$limit);
+            Gallery::$opt['page'] = $page;
 
-            if($opt["page"] < 1 or $opt["page"] > $opt["pages"]) {
+            if(Gallery::$opt['page'] < 1 or Gallery::$opt['page'] > Gallery::$opt['pages']) {
                 Gallery::error404();
             } else {
 
-                $start = ($opt["page"]-1)*$limit;
+                $start = (Gallery::$opt['page']-1)*$limit;
 
                 $records_sort = Arr::subvalSort($records_all, Gallery::$sort, Gallery::$order);
 
                 if($count_items > 0) $records = array_slice($records_sort, $start, $limit);
                 else $records = array();
 
-                if ($pages)
+                if ($view)
                 {
                     $output = View::factory('gallery/views/frontend/images')
                         ->assign('records', $records)
-                        ->assign('opt', $opt)
+                        ->assign('opt', Gallery::$opt)
                         ->render();
 
-                    $pages = Gallery::paginator_ajax($opt["page"],$opt["pages"],$slug, Gallery::$sort, Gallery::$order);
-                    return '<ul class="thumbnails">'.$output.'</ul><div class="pagination">'.$pages.'</div>';
+                    return '<ul class="thumbnails">'.$output.'</ul>'.Dev::paginator(Gallery::$opt['page'],Gallery::$opt['pages'],$slug.'?page=');
                 }
                 else
                 {
+                    $opt{'slug'} = $slug;
                     $output = View::factory('gallery/views/frontend/short')
-                        ->assign('records', $records)
-                        ->assign('opt', $opt)
+                        ->assign('items', $records)
+                        ->assign('opt', Gallery::$opt)
                         ->render();
                     return $output;
                 }
             }
         }
         return '';
+    }
+
+
+    private static function viewIndex()
+    {
+        $records = Gallery::$folder->select(null, 'all');
+        $output = View::factory('gallery/views/frontend/index')
+            ->assign('records', $records)
+            ->assign('opt', Gallery::$opt)
+            ->render();
+
+        Gallery::$meta['title'] = __('Gallery', 'gallery');
+        Gallery::$meta['keywords'] = __('Gallery keywords', 'gallery');
+        Gallery::$meta['description'] = __('Gallery description', 'gallery');
+        Gallery::$template = $output;
+    }
+
+
+    private static function viewItem($id, $slug)
+    {
+        Gallery::$opt['gallery'] = Gallery::$folder->select('[slug="'.$slug.'"]', null);
+        Gallery::$meta = Gallery::$items->select('[id="'.$id.'"]',null);
+        Gallery::$meta['keywords'] = '';
+        Gallery::$meta['hits'] = Gallery::hits(Gallery::$meta['id'], Gallery::$meta['hits']);
+
+        $output = View::factory('gallery/views/frontend/item')
+            ->assign('item', Gallery::$meta)
+            ->assign('opt', Gallery::$opt)
+            ->render();
+
+        Gallery::$template = $output;
     }
 
     public static function title(){
@@ -185,57 +245,9 @@ class Gallery extends Frontend {
         if (BACKEND == false) {
             Gallery::$template = Text::toHtml(File::getContent(STORAGE . DS . 'pages' . DS . '1.page.txt'));
             Gallery::$meta['title'] = 'error404';
+            Gallery::$meta['keywords'] = '';
+            Gallery::$meta['description'] = '';
             Response::status(404);
-        }
-    }
-
-    /**
-     * current page
-     * pages all
-     * site_url
-     * limit pages
-     */
-    public static function paginator($current, $pages, $site_url, $limit_pages=10) {
-
-        if ($pages > 1) {
-
-            // pages count > limit pages
-            if ($pages > $limit_pages) {
-                $start = ($current <= 6) ? 1 : $current-3;
-                $finish = (($pages-$limit_pages) > $current) ? ($start + $limit_pages - 1) : $pages;
-            } else {
-                $start = 1;
-                $finish = $pages;
-            }
-
-            // pages list
-            echo '<div class="pagination"><ul>';
-
-            // next
-            if($current!=$pages && Gallery::$meta['sections'] == '1')
-            {
-                echo '<li><a href="'.$site_url.($current+1).'">'.__('Next', 'gallery').'</a></li>';
-            }
-
-            if (($pages > $limit_pages) and ($current > 6)) {
-                echo '<li><a href="'.$site_url.'1">1</a></li>';
-            }
-
-            for ($i = $start; $i <= $finish; $i++) {
-                $class = ($i == $current) ? ' class="active"' : '';
-                echo '<li '.$class.'><a href="'.$site_url.$i.'">'.$i.'</a></li>';
-            }
-
-            if (($pages > $limit_pages) && ($current < ($pages - $limit_pages))) {
-                echo '<li><a href="'.$site_url.$pages.'">'.$pages.'</a></li>';
-            }
-
-            // prev
-            if($current!=1 && Gallery::$meta['sections'] == '1')
-            {
-                echo '<li><a href="'.$site_url.($current-1).'">'.__('Prev', 'gallery').'</a></li>';
-            }
-            echo '</ul></div>';
         }
     }
 
@@ -261,30 +273,43 @@ class Gallery extends Frontend {
             // next
             if($current!=$pages && $record['sections'] == '1')
             {
-                $result .= '<li><span data-action="gallery" data-sort="'.$sort.'" data-order="'.$order.'" data-page="'.($current+1).'" data-pages="'.$pages.'" data-key="'.$slug.'">'.__('Next', 'gallery').'</span></li>';
+                $result .= '<li><a href="#" data-action="gallery" data-sort="'.$sort.'" data-order="'.$order.'" data-page="'.($current+1).'" data-pages="'.$pages.'" data-key="'.$slug.'">'.__('Next', 'dev').'</a></li>';
             }
 
             if (($pages > $limit_pages) and ($current > 6)) {
-                $result .= '<li><span data-action="gallery" data-sort="'.$sort.'" data-order="'.$order.'" data-page="1" data-pages="'.$pages.'" data-key="'.$slug.'">1</span></li>';
+                $result .= '<li><a href="#" data-action="gallery" data-sort="'.$sort.'" data-order="'.$order.'" data-page="1" data-pages="'.$pages.'" data-key="'.$slug.'">1</a></li>';
             }
 
             for ($i = $start; $i <= $finish; $i++) {
                 $class = ($i == $current) ? ' class="active"' : '';
-                $result .= '<li'.$class.'><span data-action="gallery" data-sort="'.$sort.'" data-order="'.$order.'" data-page="'.($i).'" data-pages="'.$pages.'" data-key="'.$slug.'">'.$i.'</span></li>';
+                $result .= '<li'.$class.'><a href="#" data-action="gallery" data-sort="'.$sort.'" data-order="'.$order.'" data-page="'.($i).'" data-pages="'.$pages.'" data-key="'.$slug.'">'.$i.'</a></li>';
             }
 
             if (($pages > $limit_pages) && ($current < ($pages - $limit_pages))) {
-                $result .= '<li><span data-action="gallery" data-sort="'.$sort.'" data-order="'.$order.'" data-page="'.$pages.'" data-pages="'.$pages.'" data-key="'.$slug.'">'.$pages.'</span></li>';
+                $result .= '<li><a href="#" data-action="gallery" data-sort="'.$sort.'" data-order="'.$order.'" data-page="'.$pages.'" data-pages="'.$pages.'" data-key="'.$slug.'">'.$pages.'</a></li>';
             }
 
             // prev
             if($current!=1 && $record['sections'] == '1')
             {
-                $result .= '<li><span data-action="gallery" data-sort="'.$sort.'" data-order="'.$order.'" data-page="'.($current-1).'" data-pages="'.$pages.'" data-key="'.$slug.'">'.__('Prev', 'gallery').'</span></li>';
+                $result .= '<li><a href="#" data-action="gallery" data-sort="'.$sort.'" data-order="'.$order.'" data-page="'.($current-1).'" data-pages="'.$pages.'" data-key="'.$slug.'">'.__('Prev', 'dev').'</a></li>';
             }
             $result .= '</ul>';
 
             return $result;
         }
+        return '';
     }
+
+    public static function hits($id, $hits) {
+        if (Session::exists('hits'.$id) == false) {
+            $hits++;
+            if(Gallery::$items->updateWhere('[id='.$id.']', array('hits' => $hits))) {
+                Session::set('hits'.$id, 1);
+            }
+        }
+
+        return $hits;
+    }
+
 }

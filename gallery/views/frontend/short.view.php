@@ -1,22 +1,40 @@
-<?php
-foreach($records as $row):
-?>
-<li><div class="thumbnail">
+<ul class="thumbnails">
     <?php
-    if (file_exists($opt["dir"].$row['id'].'.jpg'))
-    {
-        ?>
-        <a class="cImg" rel="group" href="<?php echo $opt["img"].$row['id'].'.jpg' ?>" title="<?php echo Text::toHtml( $row['description']);?>">
-            <img alt="" style="max-width:200px; max-height:100px;" src="<?php echo $opt["img"].'thumbnail/'.$row['id'].'.jpg' ?>">
-        </a>
+foreach($items as $item):
+?>
+<li>
+    <div class="thumbnail">
         <?php
-    }
-    ?>
-    <div class="caption">
-        <h3><?php echo $row['title'];?></h3>
-        <p><?php echo Text::toHtml( $row['description']);?></p>
+        if (File::exists($opt["dir"].$item['id'].'.jpg') && $item['media'] != '') {
+            ?>
+            <a class="cImg" rel="group" href="<?php echo $item['media']; ?>" title="<?php echo Text::toHtml( $item['description']);?>">
+                <img alt="" style="max-width:200px; max-height:100px;" src="<?php echo $opt["img"].'thumbnail/'.$item['id'].'.jpg' ?>">
+            </a>
+            <?php
+        }
+        elseif (File::exists($opt["dir"].$item['id'].'.jpg')) {
+            ?>
+            <a class="cImg" rel="group" href="<?php echo $opt["url"].$item['id'].'.jpg' ?>" title="<?php echo Text::toHtml( $item['description']);?>">
+                <img alt="" style="max-width:200px; max-height:100px;" src="<?php echo $opt["url"].'thumbnail/'.$item['id'].'.jpg' ?>">
+            </a>
+            <?php
+        }
+        else {
+            ?>
+            <a class="cImg" rel="group" href="<?php echo $opt["url"].$item['id'].'.jpg' ?>" title="<?php echo Text::toHtml( $item['description']);?>">
+                <img alt="" src="<?php echo $opt["url"].'no_item.jpg' ?>">
+            </a>
+            <?php
+        }
+        ?>
+        <div class="caption">
+            <h3><?php echo $item['title'];?></h3>
+            <p><?php echo Text::toHtml( $item['description']);?></p>
+        </div>
     </div>
-</div></li>
+</li>
 <?php
 endforeach;
 ?>
+    </ul>
+<div class="pagination"><?php echo Gallery::paginator_ajax($opt["page"],$opt["pages"],$opt['slug'],Gallery::$sort,Gallery::$order) ?></div>

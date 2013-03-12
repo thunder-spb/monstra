@@ -110,8 +110,11 @@
         <div class="fileupload fileupload-new" data-provides="fileupload">
             <div class="fileupload-preview thumbnail" style="width: 200px; height: 150px;"></div>
             <div>
-                <span class="btn btn-file"><span class="fileupload-new">Select image</span><span class="fileupload-exists">Change</span><input type="file" /></span>
-                <a href="#" class="btn fileupload-exists" data-dismiss="fileupload">Remove</a>
+                <span class="btn btn-file">
+                    <span class="fileupload-new"><?php echo __('Select image', 'catalog'); ?></span>
+                    <span class="fileupload-exists"><?php echo __('Change', 'catalog'); ?></span>
+                    <?php echo Form::input('file', null, array('type' => 'file', 'size' => '25'))?></span>
+                <a href="#" class="btn fileupload-exists" data-dismiss="fileupload"><?php echo __('Remove', 'catalog'); ?></a>
             </div>
         </div>
         <?php

@@ -1,5 +1,5 @@
 $(function () {
-    $("span[data-action=gallery]").live("click", function () {
+    $("a[data-action=gallery]").live("click", function () {
         var uid = $(this).attr('data-key');
         var all = $(this).attr('data-pages');
         var page = $(this).attr('data-page');
@@ -11,8 +11,7 @@ $(function () {
             type: "POST",
             dataType: "json",
             success: function (result) {
-                $('ul.thumbnails').html(result.images);
-                $('div.pagination').html(result.pages);
+                $('[name=image]').html(result.images);
             },
             error: function (jqXhr, textStatus, errorThrown) {
                 alert("Error '" + jqXhr.status + "' (textStatus: '" + textStatus + "', errorThrown: '" + errorThrown + "')");
