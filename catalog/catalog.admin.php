@@ -5,8 +5,6 @@ Navigation::add(__('Catalog', 'catalog'), 'content', 'catalog', 10);
 Action::add('admin_themes_extra_index_template_actions','CatalogAdmin::formComponent');
 Action::add('admin_themes_extra_actions','CatalogAdmin::formComponentSave');
 
-//Stylesheet::add('plugins/catalog/content/admin.css', 'backend', 11);
-
 class CatalogAdmin extends Backend {
 
     public static function main() {
@@ -471,7 +469,7 @@ class CatalogAdmin extends Backend {
         echo (
             Form::open().
                 Form::hidden('csrf', Security::token()).
-                Form::label('catalog_form_template', __('News template', 'catalog')).
+                Form::label('catalog_form_template', __('Catalog template', 'catalog')).
                 Form::select('catalog_form_template', $templates, Option::get('catalog_template')).
                 Html::br().
                 Form::submit('catalog_component_save', __('Save', 'catalog'), array('class' => 'btn')).
