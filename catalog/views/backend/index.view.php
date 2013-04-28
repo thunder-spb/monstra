@@ -5,8 +5,9 @@
         <?php
         if (Notification::get('success')) Alert::success(Notification::get('success'));
         if (Notification::get('error')) Alert::success(Notification::get('error'));
+
         echo (Html::anchor(__('Add Catalog', 'catalog'), 'index.php?id=catalog&action=cat_add', array('class' => 'btn default btn-small'))).Html::Nbsp(2);
-        //echo (Html::anchor(__('Desc', 'catalog'), 'index.php?id=catalog&action=desc', array('class' => 'btn default btn-small'))).Html::Nbsp(2);
+        echo (Html::anchor(__('Tags', 'catalog'), 'index.php?id=catalog&action=tag', array('class' => 'btn default btn-small'))).Html::Nbsp(2);
         echo (Html::anchor(__('Settings', 'catalog'), 'index.php?id=catalog&action=settings', array('class' => 'btn default btn-small')));
         ?>
         <br /><br />

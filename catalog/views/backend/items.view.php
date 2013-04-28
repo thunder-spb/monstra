@@ -5,6 +5,7 @@
         <?php
         if (Notification::get('success')) Alert::success(Notification::get('success'));
         if (Notification::get('error')) Alert::success(Notification::get('error'));
+
         echo (Html::anchor(__('Add Item', 'catalog'), 'index.php?id=catalog&action=add&catalog_id='.$opt['cid'], array('class' => 'btn default btn-small'))).Html::Nbsp(2);
         ?>
         <br /><br />

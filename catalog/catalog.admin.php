@@ -4,6 +4,7 @@ Navigation::add(__('Catalog', 'catalog'), 'content', 'catalog', 10);
 
 Action::add('admin_themes_extra_index_template_actions','CatalogAdmin::formComponent');
 Action::add('admin_themes_extra_actions','CatalogAdmin::formComponentSave');
+Action::add('admin_pre_render','CatalogAdmin::ajaxQuery');
 
 class CatalogAdmin extends Backend {
 
@@ -15,6 +16,7 @@ class CatalogAdmin extends Backend {
 
         $items = new Table('cat_items');
         $folders = new Table('cat_folder');
+        $tags = new Table('cat_tag');
         $users = new Table('users');
 
         $user = $users->select('[id='.Session::get('user_id').']', null);
@@ -31,29 +33,6 @@ class CatalogAdmin extends Backend {
 
         $opt['dir'] = ROOT . DS . 'public' . DS . 'uploads' . DS . 'catalog' . DS;
         $opt['url'] = $opt['site_url'] . 'public/uploads/catalog/';
-        /**
-         *  Upload image
-         */
-        if (Request::post('upload_file')) {
-            if (Security::check(Request::post('csrf'))) {
-                $uid = (int)Request::post('id');
-                if ($_FILES['file']) {
-                    if($_FILES['file']['type'] == 'image/jpeg' ||
-                        $_FILES['file']['type'] == 'image/png' ||
-                        $_FILES['file']['type'] == 'image/gif') {
-
-                        $img  = Image::factory($_FILES['file']['tmp_name']);
-                        $file['wmax']   = (int)Option::get('catalog_wmax');
-                        $file['hmax']   = (int)Option::get('catalog_hmax');
-                        $file['w']      = (int)Option::get('catalog_w');
-                        $file['h']      = (int)Option::get('catalog_h');
-                        $file['resize'] = Option::get('catalog_resize');
-                        DevAdmin::ReSize($img, $opt['dir'], $uid.'.jpg', $file);
-                    }
-                }
-                Request::redirect('index.php?id=catalog&action=edit&upload=1&item_id='.$uid);
-            } else { die('csrf detected!'); }
-        }
 
         if (Request::get('action')) {
             switch (Request::get('action')) {
@@ -84,6 +63,44 @@ class CatalogAdmin extends Backend {
                     }
 
                     View::factory('catalog/views/backend/settings')->display();
+                    break;
+
+                case "tag":
+
+                    if (Request::post('catalog_submit_tag_cancel')) {
+                        Request::redirect('index.php?id=catalog');
+                    }
+
+                    if (Request::post('catalog_save_tag')) {
+                        if (Security::check(Request::post('csrf'))) {
+                            $id = (int)Request::post('edit_uid');
+                            $data = array(
+                                'title'        => Request::post('catalog_title'),
+                                'sorting'      => (int)Request::post('catalog_sort')
+                            );
+
+                            if ($id > 0)
+                            {
+                                if($tags->updateWhere('[id='.$id.']', $data)) {
+                                    Notification::set('success', __('Tag <i>:item</i> have been saved.', 'catalog', array(':item' => Request::post('catalog_title'))));
+                                }
+                            }
+                            else
+                            {
+                                if($tags->insert($data)) {
+                                    Notification::set('success', __('New tag <i>:item</i> have been added.', 'catalog', array(':item' => Request::post('catalog_title'))));
+                                }
+                            }
+
+                            Request::redirect('index.php?id=catalog&action=tag');
+                        } else { die('csrf detected!'); }
+                    }
+
+                    $records_all = $tags->select(null, 'all');
+                    $records_sort = Arr::subvalSort($records_all, 'sorting');
+                    View::factory('catalog/views/backend/tag')
+                        ->assign('items', $records_sort)
+                        ->display();
                     break;
 
                 case "items":
@@ -119,23 +136,39 @@ class CatalogAdmin extends Backend {
                     {
                         Request::redirect('index.php?id=catalog');
                     }
+                    $tag_list = $tags->select(null, 'all', null, array('id', 'title'));
+                    if (count($tag_list) == 0)
+                    {
+                        Notification::set('error', __('Add tag for create catalog', 'catalog'));
+                        Request::redirect('index.php?id=catalog&action=tag');
+                    }
+                    else
+                    {
+                        $opt['tags'] = array();
+                        foreach ($tag_list as $row)
+                        {
+                            $opt['tags'][$row['id']] = $row['title'];
+                        }
+                    }
+
                     if (Request::post('add_catalog') || Request::post('add_catalog_and_exit')) {
                         if (Security::check(Request::post('csrf'))) {
 
                             if (count($errors) == 0) {
 
                                 $data = array(
-                                    'title'         => Request::post('catalog_title'),
+                                    'title'         => (string)Request::post('catalog_title'),
                                     'slug'          => Security::safeName(Request::post('catalog_slug'), '-', true),
-                                    'description'   => Request::post('catalog_description'),
-                                    'keywords'      => Request::post('catalog_keywords'),
+                                    'description'   => (string)Request::post('catalog_description'),
+                                    'keywords'      => (string)Request::post('catalog_keywords'),
+                                    'tags'          => (int)Request::post('catalog_tag'),
                                     'parent'        => 0
                                 );
 
                                 if($folders->insert($data)) {
-
                                     $last_id = $folders->lastId();
                                     File::setContent(STORAGE . DS . 'catalog' . DS .'catalog.'. $last_id .'.txt', XML::safe(Request::post('editor')));
+                                    CatalogAdmin::UploadImage('cat_'.$last_id, $_FILES);
                                     Notification::set('success', __('New catalog <i>:catalog</i> have been added.', 'catalog', array(':catalog' => $data['title'])));
                                 }
 
@@ -168,16 +201,18 @@ class CatalogAdmin extends Backend {
                                 if (count($errors) == 0) {
 
                                     $data = array(
-                                        'title'        => Request::post('catalog_title'),
-                                        'slug'         => Security::safeName(Request::post('catalog_slug'), '-', true),
-                                        'description'  => Request::post('catalog_description'),
-                                        'keywords'     => Request::post('catalog_keywords'),
+                                        'title'         => (string)Request::post('catalog_title'),
+                                        'slug'          => Security::safeName(Request::post('catalog_slug'), '-', true),
+                                        'description'   => (string)Request::post('catalog_description'),
+                                        'keywords'      => (string)Request::post('catalog_keywords'),
+                                        'tags'          => (int)Request::post('catalog_tag'),
                                         'parent' => 0
                                     );
 
                                     $id = (int)Request::post('catalog_id');
 
                                     if($folders->updateWhere('[id='.$id.']', $data)) {
+                                        CatalogAdmin::UploadImage('cat_'.$id, $_FILES);
                                         File::setContent(STORAGE . DS . 'catalog' . DS .'catalog.'. $id .'.txt', XML::safe(Request::post('editor')));
                                         Notification::set('success', __('Your changes to the catalog <i>:catalog</i> have been saved.', 'catalog', array(':catalog' => Request::post('catalog_title'))));
                                     }
@@ -190,6 +225,14 @@ class CatalogAdmin extends Backend {
                                 }
                             } else { die('csrf detected!'); }
                         }
+
+                        $tag_list = $tags->select(null, 'all', null, array('id', 'title'));
+                        $opt['tags'] = array();
+                        foreach ($tag_list as $row)
+                        {
+                            $opt['tags'][$row['id']] = $row['title'];
+                        }
+
                         $post['cid'] = (int)Request::get('catalog_id');
                         $data = $folders->select('[id="'.$post['cid'].'"]', null);
 
@@ -198,10 +241,12 @@ class CatalogAdmin extends Backend {
                             $post['title']         = (Request::post('catalog_title'))       ? Request::post('catalog_title')       : $data['title'];
                             $post['description']   = (Request::post('catalog_description')) ? Request::post('catalog_description') : $data['description'];
                             $post['keywords']      = (Request::post('catalog_keywords'))    ? Request::post('catalog_keywords')    : $data['keywords'];
+                            $post['tags']          = (Request::post('catalog_tags'))        ? Request::post('catalog_tag')         : $data['tags'];
                             $post['content']       = (Request::post('editor'))              ? Request::post('editor')              : Text::toHtml(File::getContent(STORAGE . DS . 'catalog' . DS. 'catalog.'. $post['cid'] .'.txt'));
 
                             View::factory('catalog/views/backend/cat_edit')
                                 ->assign('post', $post)
+                                ->assign('opt', $opt)
                                 ->assign('errors', $errors)
                                 ->display();
                         }
@@ -246,7 +291,7 @@ class CatalogAdmin extends Backend {
                                     $last_id = $items->lastId();
 
                                     File::setContent(STORAGE . DS . 'catalog' . DS . 'item.' . $last_id . '.txt', XML::safe(Request::post('editor')));
-
+                                    CatalogAdmin::UploadImage($last_id, $_FILES);
                                     Notification::set('success', __('New item <i>:item</i> have been added.', 'catalog', array(':item' => Request::post('catalog_title'))));
                                 }
 
@@ -305,6 +350,7 @@ class CatalogAdmin extends Backend {
                                     );
 
                                     if($items->updateWhere('[id='.$id.']', $data)) {
+                                        CatalogAdmin::UploadImage($id, $_FILES);
                                         File::setContent(STORAGE . DS . 'catalog' . DS . 'item.' . $id . '.txt', XML::safe(Request::post('editor')));
                                         Notification::set('success', __('Your changes to the item <i>:item</i> have been saved.', 'catalog',
                                             array(':item' =>Request::post('catalog_title'))));
@@ -411,6 +457,31 @@ class CatalogAdmin extends Backend {
 
                         } else { die('csrf detected!'); }
                     }
+
+                    if (Request::get('tag_id')) {
+                        if (Security::check(Request::get('token'))) {
+                            $id = (int)Request::get('tag_id');
+
+                            $data = $tags->select('[id='.$id.']', null);
+                            $folder = $folders->select('[tag='.$id.']', null);
+
+                            if (count($folder) > 0)
+                            {
+                                Notification::set('error', __('You can not remove the tag :tag, as it contained elements.', 'catalog',
+                                    array(':tag' => Html::toText($data['title']))));
+                            }
+                            else
+                            {
+                                if ($tags->deleteWhere('[id='.$id.']')) {
+                                    Notification::set('success', __('Tag <i>:tag</i> deleted', 'catalog',
+                                        array(':tag' => Html::toText($data['title']))));
+                                }
+                            }
+
+                            Request::redirect('index.php?id=catalog&action=items&action=tag');
+
+                        } else { die('csrf detected!'); }
+                    }
                     break;
             }
 
@@ -440,6 +511,55 @@ class CatalogAdmin extends Backend {
 //				->assign('sort', $sort)
 //				->assign('order', $order)
                 ->display();
+        }
+    }
+
+    public static function UploadImage($uid, $_FILES) {
+        $dir = ROOT . DS . 'public' . DS . 'uploads' . DS . 'catalog' . DS;
+
+        if ($_FILES['file']) {
+            if($_FILES['file']['type'] == 'image/jpeg' ||
+                $_FILES['file']['type'] == 'image/png' ||
+                $_FILES['file']['type'] == 'image/gif') {
+
+                $img  = Image::factory($_FILES['file']['tmp_name']);
+                $file['wmax']   = (int)Option::get('catalog_wmax');
+                $file['hmax']   = (int)Option::get('catalog_hmax');
+                $file['w']      = (int)Option::get('catalog_w');
+                $file['h']      = (int)Option::get('catalog_h');
+                $file['resize'] = Option::get('catalog_resize');
+                DevAdmin::ReSize($img, $dir, $uid.'.jpg', $file);
+            }
+        }
+    }
+    /**
+     *  Ajax save
+     */
+    public static function ajaxQuery() {
+        $tags = new Table('cat_tag');
+
+        $dir = ROOT . DS . 'public' . DS . 'uploads' . DS . 'popps' . DS;
+        $id = (int)Request::get('tid');
+
+        if (Request::get('edit') == 'tag') {
+            if ($id == 0)
+            {
+                echo json_encode(array('id'=>$id,'h3'=>__('Add tag', 'catalog')));
+                exit();
+            }
+
+            $item = $tags->select('[id="'.$id.'"]', null);
+
+            if ($item != null)
+            {
+                $json_data = array ('id'=>$id,'title'=>$item['title'],'sort'=>$item['sorting'],'h3'=>__('Edit tag', 'catalog'));
+            }
+            else
+            {
+                $json_data = array ('id'=>$id,'title'=>'','sort'=>'','h3'=>__('Edit tag', 'catalog'));
+            }
+            echo json_encode($json_data);
+            exit();
         }
     }
 

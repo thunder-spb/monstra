@@ -4,8 +4,9 @@
 
         <?php
         if (Notification::get('success')) Alert::success(Notification::get('success'));
+        if (Notification::get('error')) Alert::success(Notification::get('error'));
 
-        echo Form::open(null, array('class' => 'form_validate'));
+        echo Form::open(null, array('class' => 'form_validate','enctype' => 'multipart/form-data'));
         echo Form::hidden('csrf', Security::token());
         echo Form::hidden('item_id', $opt['id']);
         echo Form::hidden('cat_id', $opt['cid']);
@@ -15,7 +16,7 @@
             <li <?php if (Notification::get('catalog')) { ?>class="active"<?php } ?>><a href="#catalog" data-toggle="tab"><?php echo __('Item', 'catalog'); ?></a></li>
             <li <?php if (Notification::get('seo')) { ?>class="active"<?php } ?>><a href="#seo" data-toggle="tab"><?php echo __('SEO', 'catalog'); ?></a></li>
             <li <?php if (Notification::get('settings')) { ?>class="active"<?php } ?>><a href="#settings" data-toggle="tab"><?php echo __('Settings', 'catalog'); ?></a></li>
-            <li <?php if (Notification::get('upload')) { ?>class="active"<?php } ?>><a href="#upload" data-toggle="tab"><?php echo __('Upload photo', 'catalog'); ?></a></li>
+            <li <?php if (Notification::get('img')) { ?>class="active"<?php } ?>><a href="#img" data-toggle="tab"><?php echo __('Upload image', 'catalog'); ?></a></li>
             <li><a href="<?php echo Url::base(); ?>/index.php?id=catalog&action=items&catalog_id=<?php echo $opt['cid']; ?>"><?php echo __('Return to Cat', 'catalog'); ?></a></li>
         </ul>
 
@@ -58,18 +59,27 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane <?php if (Notification::get('upload')) { ?>active<?php } ?>" id="upload">
-                <?php
-                echo (
-                Form::input('catalog_upload', __('Upload', 'catalog'), array('class' => 'btn', 'data-toggle' => 'modal', 'onclick' => '$("#upPhoto").modal("show").width(270);'))
-                );
-                if (file_exists($opt['dir'].$opt['id'].'.jpg'))
-                {
-                    ?>
-                    <a href="<?php echo $opt['url'].$opt['id'].'.jpg' ?>"><img alt="" style="max-width:100px; max-height:50px;" src="<?php echo $opt['url'].'thumbnail/'.$opt['id'].'.jpg' ?>"></a>
-                    <?php
-                }
-                ?>
+            <div class="tab-pane" id="img">
+                <div class="row-fluid">
+                    <div class="span4">
+                        <div class="fileupload fileupload-new" data-provides="fileupload">
+                            <div class="fileupload-preview thumbnail image" style="width: 200px; height: 150px;">
+                                <?php
+                                if(file::exists($opt['dir'].$opt['id'].'.jpg')):
+                                    ?>
+                                    <a href="#" rel="<?php echo $opt['url'].$opt['id'].'.jpg' ?>"><img alt="" style="max-width:100px; max-height:50px;" src="<?php echo $opt['url'].'thumbnail/'.$opt['id'].'.jpg' ?>"></a>
+                                <?php endif; ?>
+                            </div>
+                            <div>
+                                <span class="btn btn-file">
+                                    <span class="fileupload-new"><?php echo __('Select image', 'catalog'); ?></span>
+                                    <span class="fileupload-exists"><?php echo __('Change', 'catalog'); ?></span>
+                                    <?php echo Form::file('file')?></span>
+                                <a href="#" class="btn fileupload-exists" data-dismiss="fileupload"><?php echo __('Remove', 'catalog'); ?></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <br />
@@ -93,35 +103,11 @@
         </div>
     </div>
 </div>
-
-<div id="upPhoto" class="modal hide">
-    <div class="modal-header">
-        <a data-dismiss="modal" class="close">×</a>
-        <h3><?php echo __('Upload photo', 'catalog') ?></h3>
+<div id="previewLightbox" class="lightbox hide fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class='lightbox-header'>
+        <button type="button" class="close" data-dismiss="lightbox" aria-hidden="true">&times;</button>
     </div>
-    <div class="modal-body">
-        <?php
-        echo (
-                Form::open(null, array('enctype' => 'multipart/form-data')).
-                Form::hidden('csrf', Security::token()).
-                Form::hidden('id', $opt['id'])
-            );
-        ?>
-        <div class="fileupload fileupload-new" data-provides="fileupload">
-            <div class="fileupload-preview thumbnail" style="width: 200px; height: 150px;"></div>
-            <div>
-                <span class="btn btn-file">
-                    <span class="fileupload-new"><?php echo __('Select image', 'catalog'); ?></span>
-                    <span class="fileupload-exists"><?php echo __('Change', 'catalog'); ?></span>
-                    <?php echo Form::input('file', null, array('type' => 'file', 'size' => '25'))?></span>
-                <a href="#" class="btn fileupload-exists" data-dismiss="fileupload"><?php echo __('Remove', 'catalog'); ?></a>
-            </div>
-        </div>
-        <?php
-        echo (
-                Form::submit('upload_file', __('Upload', 'catalog'), array('class' => 'btn default')).
-                Form::close()
-        );
-        ?>
+    <div class='lightbox-content'>
+        <img />
     </div>
 </div>

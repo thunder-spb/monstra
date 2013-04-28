@@ -13,6 +13,7 @@ Option::delete('catalog_resize');
 
 Table::drop('cat_items');
 Table::drop('cat_folder');
+Table::drop('cat_tag');
 
 function RemoveDir($dir) {
 	if ($objs = glob($dir."/*")) {

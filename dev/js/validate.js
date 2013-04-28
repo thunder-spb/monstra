@@ -1242,6 +1242,6 @@ $.format = $.validator.format;
 }(jQuery));
 
 $(document).ready(function(){
-	$.validator.setDefaults({ ignore: '' });
+	$.validator.setDefaults({ ignore: 'file' });
 	$('.form_validate').validate();
 });

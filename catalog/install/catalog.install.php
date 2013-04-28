@@ -14,7 +14,9 @@ Option::add('catalog_resize', 'crop');
 // Add tables
 Table::create('cat_items', array('title', 'short', 'price', 'currency', 'h1', 'description', 'keywords', 'date', 'author', 'status', 'catalog', 'hits'));
 
-Table::create('cat_folder', array('title', 'description', 'keywords', 'slug', 'parent'));
+Table::create('cat_folder', array('title', 'description', 'keywords', 'slug', 'parent', 'tags'));
+
+Table::create('cat_tag', array('title', 'sorting'));
 
 // Add directory for content
 $dir = ROOT . DS . 'storage' . DS . 'catalog' . DS;

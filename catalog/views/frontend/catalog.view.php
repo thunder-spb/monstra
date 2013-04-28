@@ -36,5 +36,5 @@ foreach($records as $row):
 endforeach; ?>
 </ul>
 <?php if(!isset($opt['display'])) {
-    Dev::paginator($opt['page'], $opt['pages'], $opt["site_url"].'catalog/'.$opt["slug"].'?page=');
+    echo Dev::paginator($opt['page'], $opt['pages'], $opt["site_url"].'catalog/'.$opt["slug"].'?page=');
 }?>

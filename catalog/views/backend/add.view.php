@@ -4,8 +4,9 @@
 
         <?php
         if (Notification::get('success')) Alert::success(Notification::get('success'));
+        if (Notification::get('error')) Alert::success(Notification::get('error'));
 
-        echo Form::open(null, array('class' => 'form_validate', 'id' => 'cat_valid'));
+        echo Form::open(null, array('class' => 'form_validate','enctype' => 'multipart/form-data', 'id' => 'cat_valid'));
         echo Form::hidden('csrf', Security::token());
         echo Form::hidden('cat_id', $opt['cid']);
         ?>
@@ -14,6 +15,7 @@
             <li <?php if (Notification::get('catalog')) { ?>class="active"<?php } ?>><a href="#catalog" data-toggle="tab"><?php echo __('Item', 'catalog'); ?></a></li>
             <li <?php if (Notification::get('seo')) { ?>class="active"<?php } ?>><a href="#seo" data-toggle="tab"><?php echo __('SEO', 'catalog'); ?></a></li>
             <li <?php if (Notification::get('settings')) { ?>class="active"<?php } ?>><a href="#settings" data-toggle="tab"><?php echo __('Settings', 'catalog'); ?></a></li>
+            <li <?php if (Notification::get('img')) { ?>class="active"<?php } ?>><a href="#img" data-toggle="tab"><?php echo __('Image', 'catalog'); ?></a></li>
             <li><a href="<?php echo Url::base(); ?>/index.php?id=catalog&action=items&catalog_id=<?php echo $opt['cid']; ?>"><?php echo __('Return to Cat', 'catalog'); ?></a></li>
         </ul>
 
@@ -53,6 +55,28 @@
                                 Form::select('catalog_status', $opt['status'], 'published')
                         );
                         ?>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane <?php if (Notification::get('img')) { ?>active<?php } ?>" id="img">
+                <div class="row-fluid">
+                    <div class="span4">
+                        <div class="fileupload fileupload-new" data-provides="fileupload">
+                            <div class="fileupload-preview thumbnail" style="width: 200px; height: 150px;">
+                                <?php
+                                if(file::exists($opt['dir'].'cat_'.$post['cid'].'.jpg')):
+                                    ?>
+                                    <img src="<?php echo $opt['url'].'cat_'.$post['cid'].'.jpg';?>" />
+                                <?php endif; ?>
+                            </div>
+                            <div>
+                                <span class="btn btn-file">
+                                    <span class="fileupload-new"><?php echo __('Select image', 'catalog'); ?></span>
+                                    <span class="fileupload-exists"><?php echo __('Change', 'catalog'); ?></span>
+                                    <?php echo Form::file('file')?></span>
+                                <a href="#" class="btn fileupload-exists" data-dismiss="fileupload"><?php echo __('Remove', 'catalog'); ?></a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

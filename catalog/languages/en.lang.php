@@ -12,6 +12,8 @@
             'Catalog <i>:catalog</i> deleted' => 'Catalog <i>:catalog</i> deleted',
             'New item <i>:item</i> have been added.' => 'New item <i>:item</i> have been added.',
             'Your changes to the item <i>:item</i> have been saved.' => 'Your changes to the item <i>:item</i> have been saved.',
+            'Tag <i>:item</i> have been saved.' => 'Tag <i>:item</i> have been saved.',
+            'New tag <i>:item</i> have been added.' => 'New tag <i>:item</i> have been added.',
             'Title' => 'Title',
             'Slug' => 'Slug',
             'Actions' => 'Actions',
@@ -72,5 +74,10 @@
             'Select image' => 'Select image',
             'Change' => 'Change',
             'Remove' => 'Remove',
+            'Sorting' => 'Sorting',
+            'Tags' => 'Tags',
+            'Add' => 'Add',
+            'Add tag' => 'Add tag',
+            'Edit tag' => 'Edit tag',
         )
     );

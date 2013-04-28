@@ -13,6 +13,8 @@ return array(
         'Catalog <i>:catalog</i> deleted' => 'Каталог <i>:catalog</i> удален',
         'New item <i>:item</i> have been added.' => 'Элемент <i>:item</i> добавлен.',
         'Your changes to the item <i>:item</i> have been saved.' => 'Изменения для <i>:item</i> сохранены.',
+        'Tag <i>:item</i> have been saved.' => 'Tag <i>:item</i> сохранен.',
+        'New tag <i>:item</i> have been added.' => 'Tag <i>:item</i> добавлен.',
         'Title' => 'Название',
         'Slug' => 'Псевдоним (slug)',
         'Actions' => 'Действия',
@@ -74,5 +76,10 @@ return array(
         'Select image' => 'Выбрать изображение',
         'Change' => 'Изменить',
         'Remove' => 'Удалить',
+        'Sorting' => 'Сортировка',
+        'Tags' => 'Категории',
+        'Add' => 'Добавить',
+        'Add tag' => 'Добавление категории',
+        'Edit tag' => 'Редактирование категории',
     )
 );
