@@ -29,7 +29,7 @@
                         Form::input('catalog_title', $post['title'], array('class' => 'required span12')).
 
                         Form::label('catalog_slug', __('Alias (slug)', 'catalog')).
-                        Form::input('catalog_slug', $post['slug'], array('class' => 'required span12')).
+                        Form::input('catalog_slug', $post['slug'], array('class' => 'required span12', 'readonly' => 'readonly')).
 
                         Form::label('catalog_tag', __('Tag', 'catalog')).
                         Form::select('catalog_tag', $opt['tags'], $post['tags'])

@@ -63,11 +63,6 @@
                     <div class="span4">
                         <div class="fileupload fileupload-new" data-provides="fileupload">
                             <div class="fileupload-preview thumbnail" style="width: 200px; height: 150px;">
-                                <?php
-                                if(file::exists($opt['dir'].'cat_'.$post['cid'].'.jpg')):
-                                    ?>
-                                    <img src="<?php echo $opt['url'].'cat_'.$post['cid'].'.jpg';?>" />
-                                <?php endif; ?>
                             </div>
                             <div>
                                 <span class="btn btn-file">
