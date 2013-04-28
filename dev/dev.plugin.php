@@ -18,7 +18,7 @@
 Plugin::register( __FILE__,
     __('Dev', 'dev'),
     __('Developer plugin for Monstra', 'dev'),
-    '1.3.1',
+    '1.3.2',
     'KANekT',
     'http://kanekt.ru/',
     'dev');
