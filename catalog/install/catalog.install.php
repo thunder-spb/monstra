@@ -38,3 +38,7 @@ Option::update('dev_valid_backend', $valid);
 $upload = (int)Option::get('dev_bootstrap_file_upload');
 $upload++;
 Option::update('dev_bootstrap_file_upload', $upload);
+
+$fancy = (int)Option::get('fancy_frontend');
+$fancy++;
+Option::update('fancy_frontend', $fancy);
