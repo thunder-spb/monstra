@@ -18,5 +18,3 @@ foreach ($items as $item) :
 <?php
 endforeach
 ?>
-
-

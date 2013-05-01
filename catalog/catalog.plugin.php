@@ -17,7 +17,7 @@
 Plugin::register( __FILE__,
     __('Catalog', 'catalog'),
     __('Catalog plugin for Monstra', 'catalog'),
-    '1.4.0',
+    '1.4.1',
     'KANekT',
     'http://kanekt.ru/',
     'catalog');
@@ -91,7 +91,7 @@ class Catalog extends Frontend {
                 case 'cat':
                     return Catalog::getCatalog($uid, $count, $price, $sort);
                 case 'last':
-                    return Catalog::getLast($count, $price, 1);
+                    return Catalog::getLast($count, $price, true);
                 case 'menu':
                     return Catalog::getMenu(true);
             }
@@ -123,12 +123,15 @@ class Catalog extends Frontend {
      * Catalog last items
      * {catalog list="last" count=5}
      */
-    public static function getLast($count=0, $price=0, $display = 0){
+    public static function getLast($count=0, $price=0, $display = false){
         $records = Catalog::$items->select(null, 'all');
         $records_sort = Arr::subvalSort($records, 'id', 'DESC');
 
         if(count($records_sort)>0) {
-            if($count = 0) {$count = 5;}
+            if($count == 0) {
+                $count = 5;
+            }
+
             $records = array_slice($records_sort, 0, $count);
 
             $opt = array();
@@ -145,11 +148,14 @@ class Catalog extends Frontend {
                     ->assign('opt', $opt)
                     ->render();
 
-                return $output;
+                if ($display){
+                    return $output;
+                }
+                else{
+                    echo $output;
+                }
             }
         }
-
-        return '';
     }
 
     /**
