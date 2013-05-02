@@ -18,7 +18,7 @@
 Plugin::register( __FILE__,
     __('Gallery', 'gallery'),
     __('Gallery plugin for Monstra', 'gallery'),
-    '1.4.0',
+    '1.4.1',
     'KANekT',
     'http://kanekt.ru/',
     'gallery');
@@ -90,6 +90,7 @@ class Gallery extends Frontend {
         Gallery::$opt['url'] = Option::get('siteurl') . 'public/uploads/gallery/';
 
         Gallery::$sort = (isset($sort)) ? $sort : 'date';
+        $count = (isset($count)) ? $count : 5;
         Gallery::$order = (isset($order)) ? strtoupper($order) : 'DESC';
         Gallery::$items = new Table('gal_items');
         Gallery::$folder = new Table('gal_folder');
@@ -100,21 +101,28 @@ class Gallery extends Frontend {
                     return '<div name=image>'.Gallery::viewGallery($slug, false).'</div>';
             }
         }
+        if (isset($list)) {
+            switch ($list) {
+                case 'last':
+                    return '<div name=image>'.Gallery::viewLast($count, false).'</div>';
+            }
+        }
         return '';
     }
 
     /**
-     * <?php echo Gallery::getGallery('test'); ?>
+     * <?php echo Gallery::getGallery('test', 5); ?>
      */
-    public static function getGallery($slug){
+    public static function getGallery($slug, $limit=5){
         Gallery::$items = new Table('gal_items');
         Gallery::$folder = new Table('gal_folder');
         Gallery::$opt['site_url'] = Option::get('siteurl');
         Gallery::$opt['dir'] = ROOT . DS . 'public' . DS . 'uploads' . DS . 'gallery' . DS;
         Gallery::$opt['url'] = Option::get('siteurl') . 'public/uploads/gallery/';
 
-        return '<div name=image>'.Gallery::viewGallery($slug, false).'</div>';
+        return '<div name=image>'.Gallery::viewTop($slug, $limit).'</div>';
     }
+
     /**
      * get Get Gallery by Slug
      */
@@ -136,6 +144,63 @@ class Gallery extends Frontend {
         return '';
     }
 
+    /**
+     * {gallery list="last" count=5}
+     */
+    private static function viewLast($count, $display = true)
+    {
+        $records = Gallery::$items->select(null, 'all');
+        $records_sort = Arr::subvalSort($records, 'id', 'DESC');
+
+        if(count($records_sort)>0) {
+            if($count == 0) {
+                $count = 5;
+            }
+
+            $records = array_slice($records_sort, 0, $count);
+
+            if(count($records)>0) {
+
+                $output = View::factory('gallery/views/frontend/last')
+                    ->assign('records', $records)
+                    ->assign('opt', Gallery::$opt)
+                    ->render();
+
+                if ($display){
+                    return $output;
+                }
+                else{
+                    echo $output;
+                }
+            }
+        }
+    }
+
+    private static function viewTop($slug, $limit)
+    {
+        Gallery::$meta = Gallery::$folder->select('[slug="'.$slug.'"]', null);
+        if (isset(Gallery::$meta["id"]))
+        {
+            $id = Gallery::$meta["id"];
+
+            Gallery::$opt['slug'] = $slug;
+            Gallery::$opt['title'] = Gallery::$meta['title'];
+            Gallery::$opt['id'] = $id;
+
+            $records = Gallery::$items->select('[guid="'.$id.'"]', 'all', null, array('id','title','description','date','media'));
+            $records_sort = Arr::subvalSort($records, Gallery::$sort, Gallery::$order);
+
+            $records = array_slice($records_sort, 0, $limit);
+
+                $output = View::factory('gallery/views/frontend/images')
+                    ->assign('records', $records)
+                    ->assign('opt', Gallery::$opt)
+                    ->render();
+
+                return $output;
+        }
+        return '';
+    }
 
     private static function getList($slug, $page, $view = true)
     {
@@ -174,7 +239,7 @@ class Gallery extends Frontend {
                         ->assign('opt', Gallery::$opt)
                         ->render();
 
-                    return '<ul class="thumbnails">'.$output.'</ul>'.Dev::paginator(Gallery::$opt['page'],Gallery::$opt['pages'],$slug.'?page=');
+                    return $output.Dev::paginator(Gallery::$opt['page'],Gallery::$opt['pages'],$slug.'?page=');
                 }
                 else
                 {
@@ -311,5 +376,4 @@ class Gallery extends Frontend {
 
         return $hits;
     }
-
 }

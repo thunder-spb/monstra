@@ -1,12 +1,3 @@
-<?php if(!isset($opt['display'])) { ?>
-<ul class="breadcrumb">
-    <li><a href="<?php echo $opt["site_url"];?>gallery"><?php echo __('Gallery', 'gallery');?></a> <span class="divider">/</span></li>
-    <li class="active"><?php echo $opt['title'];?></li>
-</ul>
-<?php } ?>
-<div class="caption">
-    <p><?php echo Text::toHtml(File::getContent(STORAGE . DS . 'gallery' . DS. 'album.'. $opt['id'] .'.txt')); ?></p>
-</div>
 <ul class="thumbnails">
 <?php
 foreach($records as $row):
@@ -35,10 +26,6 @@ foreach($records as $row):
         <?php
     }
     ?>
-    <div class="caption">
-        <h3><?php echo $row['title'];?></h3>
-        <p><a class="btn btn-primary" href="<?php echo $opt["site_url"].'gallery/'.$opt["slug"].'/'.$row["id"];?>"><?php echo __('View','gallery')?></a></p>
-    </div>
 </div></li>
 <?php
 endforeach;
