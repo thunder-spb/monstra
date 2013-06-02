@@ -17,7 +17,7 @@
 Plugin::register( __FILE__,
     __('Catalog', 'catalog'),
     __('Catalog plugin for Monstra', 'catalog'),
-    '1.4.1',
+    '1.4.2',
     'KANekT',
     'http://kanekt.ru/',
     'catalog');
@@ -31,6 +31,14 @@ if (Session::exists('user_role') && in_array(Session::get('user_role'), array('a
 }
 Javascript::add('plugins/catalog/js/back.js', 'backend', 15);
 Shortcode::add('catalog', 'Catalog::_shortcode');
+
+/*
+ * Register for Developer Helper
+ */
+Registry::set('dev_valid_backend', 1);
+Registry::set('dev_file_upload', 1);
+Registry::set('dev_fancy_frontend', 1);
+
 /**
  * Sandbox simple class
  */

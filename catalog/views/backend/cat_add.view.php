@@ -56,7 +56,7 @@
                                 <span class="btn btn-file">
                                     <span class="fileupload-new"><?php echo __('Select image', 'catalog'); ?></span>
                                     <span class="fileupload-exists"><?php echo __('Change', 'catalog'); ?></span>
-                                    <?php echo Form::file('file')?></span>
+                                    <?php echo Form::file('cat_file')?></span>
                                 <a href="#" class="btn fileupload-exists" data-dismiss="fileupload"><?php echo __('Remove', 'catalog'); ?></a>
                             </div>
                         </div>

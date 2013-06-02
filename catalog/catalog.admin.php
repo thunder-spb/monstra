@@ -517,12 +517,12 @@ class CatalogAdmin extends Backend {
     public static function UploadImage($uid, $_FILES) {
         $dir = ROOT . DS . 'public' . DS . 'uploads' . DS . 'catalog' . DS;
 
-        if ($_FILES['file']) {
-            if($_FILES['file']['type'] == 'image/jpeg' ||
-                $_FILES['file']['type'] == 'image/png' ||
-                $_FILES['file']['type'] == 'image/gif') {
+        if ($_FILES['cat_file']) {
+            if($_FILES['cat_file']['type'] == 'image/jpeg' ||
+                $_FILES['cat_file']['type'] == 'image/png' ||
+                $_FILES['cat_file']['type'] == 'image/gif') {
 
-                $img  = Image::factory($_FILES['file']['tmp_name']);
+                $img  = Image::factory($_FILES['cat_file']['tmp_name']);
                 $file['wmax']   = (int)Option::get('catalog_wmax');
                 $file['hmax']   = (int)Option::get('catalog_hmax');
                 $file['w']      = (int)Option::get('catalog_w');

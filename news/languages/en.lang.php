@@ -46,6 +46,12 @@
             'by status' => 'status',
             'ASC' => 'ASC',
             'DESC' => 'DESC', 
-            'Read more' => 'Read more', 
+            'Read more' => 'Read more',
+
+            'Select image' => 'Select image',
+            'Change' => 'Change',
+            'Remove' => 'Remove',
+            'Image' => 'Image',
+            'Return to Index' => 'Return to Index',
         )
     ); 

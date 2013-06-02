@@ -18,7 +18,7 @@
 Plugin::register( __FILE__,
     __('Gallery', 'gallery'),
     __('Gallery plugin for Monstra', 'gallery'),
-    '1.4.1',
+    '1.5.0',
     'KANekT',
     'http://kanekt.ru/',
     'gallery');
@@ -33,6 +33,16 @@ if (Session::exists('user_role') && in_array(Session::get('user_role'), array('a
 
 Javascript::add('plugins/gallery/js/back.js', 'backend', 18);
 Javascript::add('plugins/gallery/js/front.js', 'frontend', 18);
+
+/*
+ * Register for Developer Helper
+ */
+Registry::set('dev_valid_backend', 1);
+Registry::set('dev_file_upload', 1);
+Registry::set('dev_fancy_frontend', 1);
+Registry::set('dev_bootstrap_file_upload', 1);
+Registry::set('dev_migrate_frontend', 1);
+Registry::set('dev_responsiveslides', 1);
 
 Shortcode::add('gallery', 'Gallery::_shortcode');
 /**
@@ -99,12 +109,16 @@ class Gallery extends Frontend {
             switch ($list) {
                 case 'album':
                     return '<div name=image>'.Gallery::viewGallery($slug, false).'</div>';
+                case 'slider':
+                    return Gallery::viewSlider($slug, false);
+                case 'top':
+                    return '<div name=image>'.Gallery::viewTop($slug, $count).'</div>';
             }
         }
         if (isset($list)) {
             switch ($list) {
                 case 'last':
-                    return '<div name=image>'.Gallery::viewLast($count, false).'</div>';
+                    return '<div name=image>'.Gallery::viewLast($count, '', false).'</div>';
             }
         }
         return '';
@@ -125,6 +139,7 @@ class Gallery extends Frontend {
 
     /**
      * get Get Gallery by Slug
+     * {gallery list="album" slug="test" sort="date" order="DESC"}
      */
     private static function viewGallery($slug, $display = true){
 
@@ -145,11 +160,30 @@ class Gallery extends Frontend {
     }
 
     /**
+     * <?php echo Gallery::Last(5); ?>
+     */	
+    public static function Last($count, $album = '')
+    {
+		Gallery::$items = new Table('gal_items');
+		Gallery::$opt['site_url'] = Option::get('siteurl');
+		Gallery::$opt['dir'] = ROOT . DS . 'public' . DS . 'uploads' . DS . 'gallery' . DS;
+		Gallery::$opt['url'] = Option::get('siteurl') . 'public/uploads/gallery/';
+		return Gallery::viewLast($count, $album);
+	}	
+	
+    /**
      * {gallery list="last" count=5}
      */
-    private static function viewLast($count, $display = true)
+    private static function viewLast($count, $album, $display = true)
     {
-        $records = Gallery::$items->select(null, 'all');
+        if ($album == '')
+        {
+            $records = Gallery::$items->select(null, 'all');
+        }
+        else
+        {
+            $records = Gallery::$items->select('[guid="'.$album.'"]', null);
+        }
         $records_sort = Arr::subvalSort($records, 'id', 'DESC');
 
         if(count($records_sort)>0) {
@@ -176,7 +210,10 @@ class Gallery extends Frontend {
         }
     }
 
-    private static function viewTop($slug, $limit)
+    /**
+     * {gallery list="top" count=5}
+     */
+    private static function viewTop($slug, $limit=5)
     {
         Gallery::$meta = Gallery::$folder->select('[slug="'.$slug.'"]', null);
         if (isset(Gallery::$meta["id"]))
@@ -255,7 +292,6 @@ class Gallery extends Frontend {
         return '';
     }
 
-
     private static function viewIndex()
     {
         $records = Gallery::$folder->select(null, 'all');
@@ -270,7 +306,6 @@ class Gallery extends Frontend {
         Gallery::$template = $output;
     }
 
-
     private static function viewItem($id, $slug)
     {
         Gallery::$opt['gallery'] = Gallery::$folder->select('[slug="'.$slug.'"]', null);
@@ -284,6 +319,46 @@ class Gallery extends Frontend {
             ->render();
 
         Gallery::$template = $output;
+    }
+
+    /*
+     * echo Gallery::Slider('test');
+     */
+    public static function Slider($slug)
+    {
+        Gallery::$items = new Table('gal_items');
+        Gallery::$folder = new Table('gal_folder');
+        Gallery::$opt['site_url'] = Option::get('siteurl');
+        Gallery::$opt['dir'] = ROOT . DS . 'public' . DS . 'uploads' . DS . 'gallery' . DS;
+        Gallery::$opt['url'] = Option::get('siteurl') . 'public/uploads/gallery/';
+        return Gallery::viewSlider($slug);
+    }
+
+    /*
+     * {gallery list="slider" slug="test"}
+     */
+    private static function viewSlider($slug, $display=true)
+    {
+        $item = Gallery::$folder->select('[slug="'.$slug.'"]', null);
+        if (isset($item["id"]))
+        {
+            $id = $item["id"];
+
+            $records = Gallery::$items->select('[guid="'.$id.'"]', 'all', null, array('id','title','description'));
+            $images = View::factory('gallery/views/frontend/slider')
+                ->assign('items', $records)
+                ->assign('opt', Gallery::$opt);
+
+            if ($display)
+            {
+                return $images->render();
+            }
+            else
+            {
+                $images->display();
+            }
+        }
+        return '';
     }
 
     public static function title(){

@@ -11,17 +11,18 @@
     Option::add('news_resize', 'crop');
     
     // Add table
-    $fields = array('slug','robots_index', 'robots_follow', 'title', 'parent', 'status', 'access', 'expand', 'description', 'keywords', 'author', 'date', 'hits');
+    $fields = array('slug','robots_index', 'robots_follow', 'title', 'parent', 'status', 'access', 'expand', 'description', 'keywords', 'author', 'date', 'hits', 'tags');
     Table::create('news', $fields);
 
     // Add directory for content
     $dir = ROOT . DS . 'storage' . DS . 'news' . DS;
     if(!is_dir($dir)) mkdir($dir, 0755);
 
-    // Add directory for image
-    $dir = ROOT . DS . 'public' . DS . 'uploads' . DS . 'news' . DS;
-    if(!is_dir($dir)) mkdir($dir, 0755);
+// Add directory for content
+$dir = ROOT . DS . 'public' . DS . 'uploads' . DS . 'news' . DS;
+if(!is_dir($dir)) mkdir($dir, 0755);
 
-$valid = (int)Option::get('dev_valid_backend');
-$valid++;
-Option::update('dev_valid_backend', $valid);
+File::copy(ROOT . DS . 'plugins' . DS . 'news'. DS . 'img' . DS .'noimage.jpg' , $dir.'no_item.jpg');
+
+$dir = $dir . 'thumbnail' . DS;
+if(!is_dir($dir)) mkdir($dir, 0755);

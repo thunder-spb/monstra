@@ -30,15 +30,3 @@ File::copy(ROOT . DS . 'plugins' . DS . 'catalog'. DS . 'img' . DS .'noimage.jpg
 
 $dir = $dir . 'thumbnail' . DS;
 if(!is_dir($dir)) mkdir($dir, 0755);
-
-$valid = (int)Option::get('dev_valid_backend');
-$valid++;
-Option::update('dev_valid_backend', $valid);
-
-$upload = (int)Option::get('dev_bootstrap_file_upload');
-$upload++;
-Option::update('dev_bootstrap_file_upload', $upload);
-
-$fancy = (int)Option::get('fancy_frontend');
-$fancy++;
-Option::update('fancy_frontend', $fancy);

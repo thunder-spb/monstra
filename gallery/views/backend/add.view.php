@@ -11,7 +11,7 @@
             Alert::error($item);
         }
 
-        echo Form::open(null, array('class' => 'form_validate'));
+        echo Form::open(null, array('class' => 'form_validate','enctype' => 'multipart/form-data'));
         echo Form::hidden('csrf', Security::token());
         echo (
         '<div class="row-fluid show-grid">'.
@@ -39,6 +39,9 @@
             Form::label('gallery_description', __('Description', 'gallery')).
             Form::textarea('gallery_description', $post['description'], array('class' => 'span12')).
 
+            Form::label('resize', __('Resize', 'gallery')).
+            Form::select('resize', GalleryAdmin::$resize, $post['resize']).
+
             '</div>'.
             '<div class="span4">'.
             Form::label('width_thumb', __('Width thumbnails (px)', 'gallery')).
@@ -47,11 +50,19 @@
             Form::label('height_thumb', __('Height thumbnails (px)', 'gallery')).
             Form::input('height_thumb', $post['h'], array('class' => 'required span12')).
 
-            Form::label('resize', __('Resize', 'gallery')).
-            Form::select('resize', GalleryAdmin::$resize, $post['resize']).
-
-            Form::label('gallery_sections', __('Sections', 'gallery')).
-            Form::checkbox('gallery_sections', '0', true).
+            '
+                <div class="fileupload fileupload-new" data-provides="fileupload">
+                    <div class="fileupload-preview thumbnail" style="width: 200px; height: 100px;">
+                    </div>
+                    <div>
+                        <span class="btn btn-file">
+                            <span class="fileupload-new">'.__('Select image', 'news').'</span>
+                                    <span class="fileupload-exists">'.__('Change', 'news').'</span>
+                                    '.Form::file('gal_file').'</span>
+                                <a href="#" class="btn fileupload-exists" data-dismiss="fileupload">'.__('Remove', 'news').'</a>
+                            </div>
+                        </div>
+                '.
             '</div>'.
         '</div>'
         );

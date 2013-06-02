@@ -42,26 +42,6 @@ class GalleryAdmin extends Backend {
         GalleryAdmin::$opt['dir'] = ROOT . DS . 'public' . DS . 'uploads' . DS . 'gallery' . DS;
         GalleryAdmin::$opt['url'] = GalleryAdmin::$opt['site_url'] . 'public/uploads/gallery/';
 
-        /**
-         *  Upload image
-         */
-        if (Request::post('upload_file')) {
-            if (Security::check(Request::post('csrf'))) {
-                $uid = (int)Request::post('id');
-                if ($_FILES['file']) {
-                    if($_FILES['file']['type'] == 'image/jpeg' ||
-                        $_FILES['file']['type'] == 'image/png' ||
-                        $_FILES['file']['type'] == 'image/gif') {
-
-                        $img  = Image::factory($_FILES['file']['tmp_name']);
-                        $options = GalleryAdmin::$folder->select('[id='.$uid.']', null);
-                        DevAdmin::ReSize($img, GalleryAdmin::$opt['dir'], 'album_'.$uid.'.jpg', $options);
-                    }
-                }
-                Request::redirect('index.php?id=gallery&action=edit&gallery_id='.$uid);
-            } else { die('csrf detected!'); }
-        }
-
         if (Request::get('action')) {
             switch (Request::get('action')) {
 
@@ -192,7 +172,7 @@ class GalleryAdmin extends Backend {
 
                                     $last_id = GalleryAdmin::$folder->lastId();
                                     File::setContent(STORAGE . DS . 'gallery' . DS .'album.'.$last_id.'.txt', XML::safe(Request::post('editor')));
-
+                                    GalleryAdmin::UploadImage($last_id, $_FILES);
                                     Notification::set('success', __('New album <i>:album</i> have been added.', 'gallery', array(':album' => Security::safeName($data['title'], '-', true))));
                                 }
 
@@ -250,7 +230,7 @@ class GalleryAdmin extends Backend {
 
                                     if(GalleryAdmin::$folder->updateWhere('[id='.$id.']', $data)) {
                                         File::setContent(STORAGE . DS . 'gallery' . DS .'album.'.$id.'.txt', XML::safe(Request::post('editor')));
-
+                                        GalleryAdmin::UploadImage($id, $_FILES);
                                         Notification::set('success', __('Your changes to the album <i>:album</i> have been saved.', 'gallery', array(':album' => Security::safeName(Request::post('gallery_title'), '-', true))));
                                     }
 
@@ -620,5 +600,21 @@ class GalleryAdmin extends Backend {
     {
         $hash = json_decode(file_get_contents("http://api.instagram.com/oembed?url=".$media));
         return $hash->url;
+    }
+
+
+    public static function UploadImage($uid, $_FILES) {
+        //$dir = ROOT . DS . 'public' . DS . 'uploads' . DS . 'gallery' . DS;
+
+        if ($_FILES['gal_file']) {
+            if($_FILES['gal_file']['type'] == 'image/jpeg' ||
+                $_FILES['gal_file']['type'] == 'image/png' ||
+                $_FILES['gal_file']['type'] == 'image/gif') {
+
+                $img  = Image::factory($_FILES['gal_file']['tmp_name']);
+                $options = GalleryAdmin::$folder->select('[id='.$uid.']', null);
+                DevAdmin::ReSize($img, GalleryAdmin::$opt['dir'], 'album_'.$uid.'.jpg', $options);
+            }
+        }
     }
 }

@@ -13,7 +13,7 @@
 
         $sections = $post['sections'] == 0 ? false : true;
 
-        echo Form::open(null, array('class' => 'form_validate'));
+        echo Form::open(null, array('class' => 'form_validate','enctype' => 'multipart/form-data'));
         echo Form::hidden('csrf', Security::token());
         echo Form::hidden('gallery_id', $post['id']);
         echo (
@@ -23,7 +23,7 @@
                 Form::input('gallery_title', $post['title'], array('class' => 'required span12')).
 
                 Form::label('gallery_slug', __('Alias (slug)', 'gallery')).
-                Form::input('gallery_slug', $post['slug'], array('class' => 'required span12')).
+                Form::input('gallery_slug', $item['slug'], array('class' => 'required span6', 'readonly' => 'readonly')).
 
                 Form::label('gallery_keywords', __('Keywords', 'gallery')).
                 Form::input('gallery_keywords', $post['keywords'], array('class' => 'span12')).
@@ -41,9 +41,25 @@
 
                 Form::label('gallery_limit', __('Items per page (website)', 'gallery')).
                 Form::input('gallery_limit', $post['limit'], array('class' => 'required span12')).
+                '
+                        <div class="fileupload fileupload-new" data-provides="fileupload">
+                            <div class="fileupload-preview thumbnail" style="width: 200px; height: 50px;">');
+                if(file::exists($opt['dir'].'album_'.$post['id'].'.jpg')):
+                    ?>
+                    <a href="#" rel="<?php echo $opt['url'].'album_'.$post['id'].'.jpg' ?>"><img alt="" style="max-width:100px; max-height:50px;" src="<?php echo $opt['url'].'thumbnail/album_'.$post['id'].'.jpg' ?>"></a>
+                <?php endif;
+                echo ('
+                                </div>
+                            <div>
+                                <span class="btn btn-file">
+                                    <span class="fileupload-new">'.__('Select image', 'news').'</span>
+                                    <span class="fileupload-exists">'.__('Change', 'news').'</span>
 
-                Form::input('gallery_upload', 'Загрузить', array('class' => 'btn', 'onclick' => '$("#upPhoto").modal("show").width(270);', 'data-toggle' => 'modal')).
-                '<img alt="" style="max-width:200px; max-height:100px;" src="'.$opt["url"].'thumbnail/album_'.$post['id'].'.jpg">'.
+                </span>
+                                <a href="#" class="btn fileupload-exists" data-dismiss="fileupload">'.__('Remove', 'news').'</a>
+                            </div>
+                        </div>
+                '.
                 '</div>'.
                 '<div class="span4">'.
                 Form::label('width_thumb', __('Width thumbnails (px)', 'gallery')).

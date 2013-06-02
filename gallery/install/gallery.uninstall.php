@@ -24,15 +24,3 @@ function RemoveDir($dir) {
 
 RemoveDir(ROOT . DS . 'public' . DS . 'uploads' . DS . 'gallery' . DS);
 RemoveDir(STORAGE . DS . 'gallery' . DS);
-
-$valid = (int)Option::get('dev_valid_backend');
-$valid--;
-Option::update('dev_valid_backend', $valid);
-
-$upload = (int)Option::get('dev_file_upload');
-$upload--;
-Option::update('dev_file_upload', $upload);
-
-$fancy = (int)Option::get('dev_fancy_frontend');
-$fancy--;
-Option::update('dev_fancy_frontend', $fancy);

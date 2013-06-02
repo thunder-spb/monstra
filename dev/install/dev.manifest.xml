@@ -2,10 +2,10 @@
 <root>
     <plugin_location>plugins/dev/dev.plugin.php</plugin_location>
     <plugin_status>active</plugin_status>
-    <plugin_priority>15</plugin_priority>
-    <plugin_name>Developer Js</plugin_name>
-    <plugin_description>Developer Js plugin for Monstra</plugin_description>
-    <plugin_version>1.3.2</plugin_version>
+    <plugin_priority>100</plugin_priority>
+    <plugin_name>Developer Helper</plugin_name>
+    <plugin_description>Developer Helper plugin for Monstra</plugin_description>
+    <plugin_version>1.4.0</plugin_version>
     <plugin_author>KANekT</plugin_author>
     <plugin_author_uri>http://kanekt.ru/</plugin_author_uri>
 </root>

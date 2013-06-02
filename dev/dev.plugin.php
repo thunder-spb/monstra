@@ -17,11 +17,11 @@
 // Register plugin
 Plugin::register( __FILE__,
     __('Dev', 'dev'),
-    __('Developer plugin for Monstra', 'dev'),
-    '1.3.2',
+    __('Developer Helper plugin for Monstra', 'dev'),
+    '1.4.0',
     'KANekT',
-    'http://kanekt.ru/',
-    'dev');
+    'http://kanekt.ru/'
+);
 
     // Load Sandbox Admin for Editor and Admin
 
@@ -30,27 +30,27 @@ Plugin::register( __FILE__,
         Plugin::admin('dev');
 
     }
-    if ((int)Option::get('dev_valid_frontend') > 0)
+    if (Registry::exists('dev_valid_frontend'))
     {
         Javascript::add('plugins/dev/js/validate.js', 'frontend', 11);
     }
-    if ((int)Option::get('dev_valid_backend') > 0)
+    if (Registry::exists('dev_valid_backend'))
     {
         Javascript::add('plugins/dev/js/validate.js', 'backend', 11);
     }
 
-    if ((int)Option::get('dev_date_frontend') > 0)
+    if (Registry::exists('dev_date_frontend'))
     {
         Javascript::add('plugins/dev/js/datepicker.js', 'frontend', 11);
         Stylesheet::add('plugins/dev/css/datepicker.css', 'frontend',11);
     }
-    if ((int)Option::get('dev_date_backend') > 0)
+    if (Registry::exists('dev_date_backend'))
     {
         Javascript::add('plugins/dev/js/datepicker.js', 'backend', 11);
         Stylesheet::add('plugins/dev/css/datepicker.css', 'backend',11);
     }
 
-    if ((int)Option::get('dev_file_upload') > 0)
+    if (Registry::exists('dev_file_upload'))
     {
         Stylesheet::add('plugins/dev/css/jquery.fileupload-ui.css', 'backend',15);
         Javascript::add('plugins/dev/js/vendor/jquery.ui.widget.js', 'backend', 15);
@@ -59,13 +59,13 @@ Plugin::register( __FILE__,
         Javascript::add('plugins/dev/js/jquery.fileupload-ui.js', 'backend', 18);
     }
 
-    if ((int)Option::get('dev_bootstrap_file_upload') > 0)
+    if (Registry::exists('dev_bootstrap_file_upload'))
     {
         Stylesheet::add('plugins/dev/css/bootstrap-fileupload.min.css', 'backend',18);
         Javascript::add('plugins/dev/js/bootstrap-fileupload.min.js', 'backend', 18);
     }
 
-    if ((int)Option::get('dev_fancy_frontend') > 0)
+    if (Registry::exists('dev_fancy_frontend'))
     {
         Javascript::add('plugins/dev/js/jquery.fancybox.pack.js', 'frontend', 15);
         Javascript::add('plugins/dev/js/jquery.fancybox-media.js', 'frontend', 16);
@@ -73,7 +73,7 @@ Plugin::register( __FILE__,
 
         Javascript::add('plugins/dev/js/script.js', 'frontend', 17);
     }
-    if ((int)Option::get('dev_fancy_backend') > 0)
+    if (Registry::exists('dev_fancy_backend'))
     {
         Javascript::add('plugins/dev/js/jquery.fancybox.pack.js', 'backend', 15);
         Stylesheet::add('plugins/dev/css/jquery.fancybox.css', 'backend',15);
@@ -81,14 +81,21 @@ Plugin::register( __FILE__,
         Javascript::add('plugins/dev/js/script.js', 'backend', 17);
     }
 
-    if ((int)Option::get('dev_migrate_frontend') > 0)
+    if (Registry::exists('dev_migrate_frontend'))
     {
         Javascript::add('plugins/dev/js/jquery-migrate-1.1.1.min.js', 'frontend', 5);
     }
-    if ((int)Option::get('dev_migrate_backend') > 0)
+    if (Registry::exists('dev_migrate_backend'))
     {
         Javascript::add('plugins/dev/js/jquery-migrate-1.1.1.min.js', 'backend', 5);
     }
+
+    if (Registry::exists('dev_responsiveslides'))
+    {
+        Javascript::add('plugins/dev/js/responsiveslides.min.js', 'frontend', 25);
+        Stylesheet::add('plugins/dev/css/responsiveslides.css', 'frontend', 25);
+    }
+
 class Dev extends Frontend {
 
     /**
@@ -97,9 +104,18 @@ class Dev extends Frontend {
      * site_url
      * limit pages
      */
-    public static function paginator($current, $pages, $site_url, $sections = 1, $limit_pages=10) {
+    public static function paginator($current, $pages, $urls, $sections = 1, $limit_pages=10) {
 
         $content = '';
+        if (is_array($urls))
+        {
+            $url = $urls[0];
+            $req = $urls[1];
+        }
+        else{
+            $url = $urls;
+            $req = '';
+        }
         if ($pages > 1) {
 
             // pages count > limit pages
@@ -117,26 +133,26 @@ class Dev extends Frontend {
             // next
             if($current!=$pages && $sections > 0)
             {
-                $content .= '<li><a href="'.$site_url.($current+1).'">'.__('Next', 'dev').'</a></li>';
+                $content .= '<li><a href="'.$url.($current+1).$req.'">'.__('Next', 'dev').'</a></li>';
             }
 
             if (($pages > $limit_pages) and ($current > 6)) {
-                $content .= '<li><a href="'.$site_url.'1">1</a></li>';
+                $content .= '<li><a href="'.$url.'1'.$req.'">1</a></li>';
             }
 
             for ($i = $start; $i <= $finish; $i++) {
                 $class = ($i == $current) ? ' class="active"' : '';
-                $content .= '<li '.$class.'><a href="'.$site_url.$i.'">'.$i.'</a></li>';
+                $content .= '<li '.$class.'><a href="'.$url.$i.$req.'">'.$i.'</a></li>';
             }
 
             if (($pages > $limit_pages) && ($current < ($pages - $limit_pages))) {
-                $content .= '<li><a href="'.$site_url.$pages.'">'.$pages.'</a></li>';
+                $content .= '<li><a href="'.$url.$pages.$req.'">'.$pages.'</a></li>';
             }
 
             // prev
             if($current!=1 && $sections > 0)
             {
-                $content .= '<li><a href="'.$site_url.($current-1).'">'.__('Prev', 'dev').'</a></li>';
+                $content .= '<li><a href="'.$url.($current-1).$req.'">'.__('Prev', 'dev').'</a></li>';
             }
             $content .= '</ul></div>';
         }
