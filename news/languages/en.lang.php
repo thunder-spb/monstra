@@ -34,11 +34,12 @@
             'News per page (website)' => 'News per page (website)', 
             'News per page (admin)' => 'News per page (admin)',
             'Your changes have been saved' => 'Your changes have been saved', 
-            'Hits count' => 'Hits count',
+            'Hits count' => 'Hits count ',
             'Hits' => 'Hits', 
             'Prev' => 'Prev', 
             'Next' => 'Next', 
-            'Pages:' => 'Pages:', 
+            'Pages:' => 'Pages:',
+            'Template' => 'Template',
             'Sort by:' => 'Sort by:', 
             'by date' => 'date',
             'by number' => 'number',
@@ -53,5 +54,7 @@
             'Remove' => 'Remove',
             'Image' => 'Image',
             'Return to Index' => 'Return to Index',
+
+            'Related posts' => 'Related news',
         )
     ); 

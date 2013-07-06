@@ -63,6 +63,14 @@
                     ?>
                     </div>
                     <div class="span3">
+                        <?php
+                        echo (
+                            Form::label('news_template', __('Template', 'news')).
+                            Form::select('news_template', $opt['templates'], $item['template'])
+                        );
+                        ?>
+                    </div>
+                    <div class="span3">
                     <?php 
                         echo (
                             Form::label('news_status', __('Status', 'news')).

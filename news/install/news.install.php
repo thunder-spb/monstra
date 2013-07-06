@@ -11,7 +11,7 @@
     Option::add('news_resize', 'crop');
     
     // Add table
-    $fields = array('slug','robots_index', 'robots_follow', 'title', 'parent', 'status', 'access', 'expand', 'description', 'keywords', 'author', 'date', 'hits', 'tags');
+    $fields = array('slug','robots_index', 'robots_follow', 'title', 'parent', 'status', 'template', 'access', 'expand', 'description', 'keywords', 'author', 'date', 'hits', 'tags');
     Table::create('news', $fields);
 
     // Add directory for content

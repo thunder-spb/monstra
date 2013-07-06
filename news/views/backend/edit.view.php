@@ -31,9 +31,16 @@
                     Form::label('news_title', __('Title', 'news')).
                     Form::input('news_title', $item['title'], array('class' => 'required span6')).
 
-                    Form::label('news_slug', __('Name (slug)', 'news')).
-                    Form::input('news_slug', $item['slug'], array('class' => 'required span6', 'readonly' => 'readonly'))
+                    Form::label('news_slug', __('Name (slug)', 'news'))
                 );
+                if ($item['slug'] != "")
+                {
+                    echo Form::input('news_slug', $item['slug'], array('class' => 'required span6', 'readonly' => 'readonly'));
+                }
+                else
+                {
+                    echo Form::input('news_slug', $item['slug'], array('class' => 'required span6'));
+                }
                 ?>
             </div>
             <div class="tab-pane <?php if (Notification::get('metadata')) { ?>active<?php } ?>" id="metadata">
@@ -61,6 +68,14 @@
                         echo (
                             Form::label('news_parent', __('Parent', 'news')).
                             Form::select('news_parent', $opt['list'], $item['parent'])
+                        );
+                        ?>
+                    </div>
+                    <div class="span3">
+                        <?php
+                        echo (
+                            Form::label('news_template', __('Template', 'news')).
+                            Form::select('news_template', $opt['templates'], $item['template'])
                         );
                         ?>
                     </div>

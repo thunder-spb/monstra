@@ -36,6 +36,7 @@
             'Page' => 'Страница',
 			'Pages:' => 'Страницы:',
 			'Parent' => 'Родитель',
+            'Template' => 'Шаблон',
 			'Public' => 'Публичный',
             'Published' => 'Опубликовано',
 			'Published on' => 'Опубликовано',
@@ -62,7 +63,7 @@
 			'Upload' => 'Загрузить',
             'Your changes to the news <i>:news</i> have been saved.' => 'Ваши изменения к новости <i>:news</i> были сохранены.',
             'Your changes have been saved' => 'Ваши изменения были сохранены', 
-            'Hits count' => 'Количество просмотров',
+            'Hits count' => 'Количество просмотров ',
             'Hits' => 'Просмотры',
 			'Height thumbnails (px)' => 'Высота миниатюр (px)',
             'by date' => 'дате',
@@ -90,5 +91,7 @@
             'Remove' => 'Удалить',
             'Image' => 'Изображение',
             'Return to Index' => 'Вернуться назад',
+
+            'Related posts' => 'Новости по теме',
         )
     ); 

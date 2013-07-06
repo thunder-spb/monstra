@@ -17,7 +17,7 @@
 Plugin::register( __FILE__,
     __('News', 'news'),
     __('News plugin for Monstra', 'news'),
-    '1.5.0',
+    '1.6.0',
     'KANekT',
     'http://monstra.org/',
     'news');
@@ -30,6 +30,8 @@ if (Session::exists('user_role') && in_array(Session::get('user_role'), array('a
 /*
  * Register for Developer Helper
  */
+Registry::set('dev_migrate_backend', 1);
+Registry::set('dev_migrate_frontend', 1);
 Registry::set('dev_valid_backend', 1);
 Registry::set('dev_bootstrap_file_upload', 1);
 Registry::set('dev_fancy_frontend', 1);
@@ -39,8 +41,10 @@ Shortcode::add('news', 'News::_shortcode');
 class News extends Frontend {
 
     public static $news = null; // news table @object
+    public static $_news = null; // news item @object
     public static $meta = array(); // meta tags news @array
     public static $template = ''; // news template content @string
+    public static $slug;
 
     public static function main(){
 
@@ -55,15 +59,7 @@ class News extends Frontend {
         if($uri[0] == 'news') {
             if (isset($uri[1]))
             {
-                switch($uri[1])
-                {
-                    case 'view':
-                        News::getNewsBySlug($uri[2]);
-                        break;
-                    default:
-                        News::getNews($uri);
-                        break;
-                }
+                News::getNewsBySlug($uri[1]);
             }
             else
             {
@@ -204,19 +200,22 @@ class News extends Frontend {
         $opt['site_url'] = Option::get('siteurl');
         $opt['url'] = $opt['site_url'] . 'public/uploads/news/';
         $opt['dir'] = ROOT . DS . 'public' . DS . 'uploads' . DS . 'news' . DS;
-        $records = News::$news->select('[slug="'.$slug.'"]', null);
+        $record = News::$news->select('[slug="'.$slug.'"]', null);
+        News::$slug = $slug;
 
-        if($records) {
-            if(empty($records['title'])) $records['title'] = $records['name'];
+        if($record) {
+            News::$_news = $record;
+            print_r($record);
+            if(empty($record['title'])) $record['title'] = $record['name'];
 
-            News::$meta['title'] = $records['title'];
-            News::$meta['keywords'] = $records['keywords'];
-            News::$meta['description'] = $records['description'];
+            News::$meta['title'] = $record['title'];
+            News::$meta['keywords'] = $record['keywords'];
+            News::$meta['description'] = $record['description'];
 
-            $records['hits'] = News::hits($records['id'], $records['hits']);
+            $record['hits'] = News::hits($record['id'], $record['hits']);
 
             News::$template = View::factory('news/views/frontend/item')
-                ->assign('item', $records)
+                ->assign('item', $record)
                 ->assign('opt', $opt)
                 ->render();
         } else {
@@ -237,11 +236,12 @@ class News extends Frontend {
     }
 
     public static function content(){
-        return News::$template;
+        $content = Filter::apply('content', News::$template);
+        return $content;
     }
 
     public static function template() {
-        return Option::get('news_template');
+        if (News::$_news['template'] == '') return Option::get('news_template'); else return News::$_news['template'];
     }
 
     public static function error404() {
@@ -338,5 +338,36 @@ class News extends Frontend {
 
         // Return tags
         return $tags;
+    }
+
+    /**
+     * Get related posts
+     * @author Romanenko Sergey / Awilum
+     *
+     *  <code>
+     *      echo News::getRelatedPosts();
+     *  </code>
+     *
+     * @return string
+     */
+    public static function getRelatedPosts($limit = null) {
+
+        $related_posts = array();
+        $tags = News::getTagsArray(News::$slug);
+
+        foreach($tags as $tag) {
+
+            $query = '[status="published" and contains(keywords, "'.$tag.'") and slug!="'.News::$slug.'"]';
+
+            if ($result = Arr::subvalSort(News::$news->select($query, ($limit == null) ? 'all' : (int)$limit), 'date', 'DESC')) {
+                $related_posts = $result;
+            }
+        }
+
+        // Display view
+        return View::factory('news/views/frontend/related_posts')
+            ->assign('related_posts', $related_posts)
+            ->render();
+
     }
 }

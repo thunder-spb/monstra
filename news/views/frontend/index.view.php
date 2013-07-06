@@ -7,7 +7,7 @@
     <ul class="thumbnails">
         <?php
         foreach($records as $item):
-            $url_item = $opt["site_url"].'news/view/'.$item["slug"];
+            $url_item = $opt["site_url"].'news/'.$item["slug"];
             ?>
             <li class="span12">
                 <div class="thumbnail media">

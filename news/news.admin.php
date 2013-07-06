@@ -17,8 +17,14 @@ class NewsAdmin extends Backend {
      * News admin function
      */
     public static function main() {
+        $templates_path = THEMES_SITE;
         $opt['site_url'] = Option::get('siteurl');
 
+        // Get all templates
+        $templates_list = File::scan($templates_path, '.template.php');
+        foreach ($templates_list as $file) {
+            $opt['templates'][basename($file, '.template.php')] = basename($file, '.template.php');
+        }
         $errors = array();
 
         $news = new Table('news');
@@ -107,6 +113,7 @@ class NewsAdmin extends Backend {
                             'robots_index' => $orig_news['robots_index'],
                             'robots_follow'=> $orig_news['robots_follow'],
                             'status'       => $orig_news['status'],
+                            'template'     => $orig_news['template'],
                             'access'       => (isset($orig_news['access'])) ? $orig_news['access'] : 'public',
                             'expand'       => (isset($orig_news['expand'])) ? $orig_news['expand'] : '0',
                             'title'        => $rand_news_title,
@@ -177,6 +184,7 @@ class NewsAdmin extends Backend {
                                         'slug'         => Security::safeName(Request::post('news_slug'), '-', true),
                                         'parent'       => $parent,
                                         'status'       => Request::post('news_status'),
+                                        'template'     => Request::post('news_template'),
                                         'access'       => Request::post('news_access'),
                                         'expand'       => '0',
                                         'robots_index' => $robots_index,
@@ -234,6 +242,7 @@ class NewsAdmin extends Backend {
                     if (Request::post('tags'))             $news_item['tags']          = Request::post('tags');         else $news_item['tags'] = '';
                     if (Request::post('description'))      $news_item['description']   = Request::post('description');  else $news_item['description'] = '';
                     if (Request::post('editor'))           $news_item['content']       = Request::post('editor');       else $news_item['content'] = '';
+                    if (Request::post('templates'))        $news_item['template']      = Request::post('templates');    else $news_item['template'] = 'index';
                     if (Request::post('short'))            $news_item['short']         = Request::post('short');        else $news_item['short'] = '';
                     if (Request::post('status'))           $news_item['status']        = Request::post('status');       else $news_item['status'] = 'published';
                     if (Request::post('access'))           $news_item['access']        = Request::post('access');       else $news_item['access'] = 'public';
@@ -296,6 +305,7 @@ class NewsAdmin extends Backend {
                                     'robots_index' => $robots_index,
                                     'robots_follow'=> $robots_follow,
                                     'status'       => Request::post('news_status'),
+                                    'template'     => Request::post('news_template'),
                                     'access'       => Request::post('news_access'),
                                     'date'         => $date,
                                     'author'       => $author

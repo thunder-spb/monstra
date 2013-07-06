@@ -20,9 +20,10 @@
 </div>
 <?php if(!isset($opt['display'])) { ?>
     <p><br /><? echo News::getTags($item['slug']);?>
+    <? echo News::getRelatedPosts(); ?><br />
     <ul class="breadcrumb">
         <li><?php echo Date::format($item['date'], 'd.m.Y'); ?> <span class="divider">/</span></li>
-        <li class="active"><?php echo __('Hits count','catalog').$item['hits'] ?></li>
+        <li class="active"><?php echo __('Hits count','news').$item['hits'] ?></li>
     </ul>
-<?php } ?>
-
+<?php }
+?>
