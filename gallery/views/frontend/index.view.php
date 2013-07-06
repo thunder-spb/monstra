@@ -7,6 +7,7 @@
         ?>
     </p>
 </div>
+<?php if (count($records) > 0): ?>
 <ul class="thumbnails">
     <?php foreach($records as $item):
     $url_item = Option::get('siteurl').'gallery/'.$item["slug"];
@@ -27,3 +28,4 @@
     </li>
     <?php endforeach; ?>
 </ul>
+<?php endif;
