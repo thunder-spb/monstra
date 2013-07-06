@@ -205,7 +205,7 @@ class News extends Frontend {
 
         if($record) {
             News::$_news = $record;
-            print_r($record);
+
             if(empty($record['title'])) $record['title'] = $record['name'];
 
             News::$meta['title'] = $record['title'];
