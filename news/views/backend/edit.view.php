@@ -35,11 +35,11 @@
                 );
                 if ($item['slug'] != "")
                 {
-                    echo Form::input('news_slug', $item['slug'], array('class' => 'required span6', 'readonly' => 'readonly'));
+                    echo Form::input('news_slug', $item['slug'], array('class' => 'span6', 'readonly' => 'readonly'));
                 }
                 else
                 {
-                    echo Form::input('news_slug', $item['slug'], array('class' => 'required span6'));
+                    echo Form::input('news_slug', $item['slug'], array('class' => 'span6'));
                 }
                 ?>
             </div>

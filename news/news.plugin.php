@@ -17,7 +17,7 @@
 Plugin::register( __FILE__,
     __('News', 'news'),
     __('News plugin for Monstra', 'news'),
-    '1.6.0',
+    '1.6.1',
     'KANekT',
     'http://monstra.org/',
     'news');
@@ -59,10 +59,17 @@ class News extends Frontend {
         if($uri[0] == 'news') {
             if (isset($uri[1]))
             {
-                News::getNewsBySlug($uri[1]);
+                switch($uri[1])
+                {
+                    case 'page':
+                        News::getNews($uri);
+                        break;
+                    default:
+                        News::getNewsBySlug($uri[1]);
+                        break;
+                }
             }
-            else
-            {
+            else{
                 News::getNews($uri);
             }
         }

@@ -17,7 +17,7 @@
 Plugin::register( __FILE__,
     __('Articles', 'articles'),
     __('Articles plugin for Monstra', 'articles'),
-    '1.6.0',
+    '1.6.1',
     'KANekT',
     'http://monstra.org/',
     'articles');
@@ -59,10 +59,17 @@ class Articles extends Frontend {
         if($uri[0] == 'articles') {
             if (isset($uri[1]))
             {
-                Articles::getArticlesBySlug($uri[1]);
+                switch($uri[1])
+                {
+                    case 'page':
+                        Articles::getArticles($uri);
+                        break;
+                    default:
+                        Articles::getArticlesBySlug($uri[1]);
+                        break;
+                }
             }
-            else
-            {
+            else{
                 Articles::getArticles($uri);
             }
         }

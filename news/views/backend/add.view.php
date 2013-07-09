@@ -30,7 +30,7 @@
                         Form::input('news_title', $item['title'], array('class' => 'required span6')).
 
                         Form::label('news_slug', __('Name (slug)', 'news')).
-                        Form::input('news_slug', $item['slug'], array('class' => 'required span6'))
+                        Form::input('news_slug', $item['slug'], array('class' => 'span6'))
                     );
                 ?>
             </div>

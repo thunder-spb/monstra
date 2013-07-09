@@ -174,6 +174,7 @@ class ArticlesAdmin extends Backend {
 
                             if (Request::post('article_robots_index'))  $robots_index = 'noindex';   else $robots_index = 'index';
                             if (Request::post('article_robots_follow')) $robots_follow = 'nofollow'; else $robots_follow = 'follow';
+                            $slug = (Request::post('article_slug') == "") ? Request::post('article_title') : Request::post('article_slug');
 
                             // If no errors then try to save
                             if (count($errors) == 0) {
@@ -181,7 +182,7 @@ class ArticlesAdmin extends Backend {
                                 $last_id =  0;
                                 // Insert new articles
                                 if ($articles->insert(array(
-                                        'slug'         => Security::safeName(Request::post('article_slug'), '-', true),
+                                        'slug'         => Security::safeName($slug, '-', true),
                                         'parent'       => $parent,
                                         'status'       => Request::post('article_status'),
                                         'template'     => Request::post('article_template'),
@@ -292,11 +293,12 @@ class ArticlesAdmin extends Backend {
 
                             if (Request::post('robots_index'))  $robots_index = 'noindex';   else $robots_index = 'index';
                             if (Request::post('robots_follow')) $robots_follow = 'nofollow'; else $robots_follow = 'follow';
+                            $slug = (Request::post('article_slug') == "") ? Request::post('article_title') : Request::post('article_slug');
 
                             if (count($errors) == 0) {
 
                                 $data = array(
-                                    'slug'         => Security::safeName(Request::post('article_slug'), '-', true),
+                                    'slug'         => Security::safeName($slug, '-', true),
                                     'parent'       => $parent,
                                     'title'        => Request::post('article_title'),
                                     'description'  => Request::post('article_description'),

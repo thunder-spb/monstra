@@ -174,6 +174,7 @@ class NewsAdmin extends Backend {
 
                             if (Request::post('news_robots_index'))  $robots_index = 'noindex';   else $robots_index = 'index';
                             if (Request::post('news_robots_follow')) $robots_follow = 'nofollow'; else $robots_follow = 'follow';
+                            $slug = (Request::post('news_slug') == "") ? Request::post('news_title') : Request::post('news_slug');
 
                             // If no errors then try to save
                             if (count($errors) == 0) {
@@ -181,7 +182,7 @@ class NewsAdmin extends Backend {
                                 $last_id =  0;
                                 // Insert new news
                                 if ($news->insert(array(
-                                        'slug'         => Security::safeName(Request::post('news_slug'), '-', true),
+                                        'slug'         => Security::safeName($slug, '-', true),
                                         'parent'       => $parent,
                                         'status'       => Request::post('news_status'),
                                         'template'     => Request::post('news_template'),
@@ -292,11 +293,12 @@ class NewsAdmin extends Backend {
 
                             if (Request::post('robots_index'))  $robots_index = 'noindex';   else $robots_index = 'index';
                             if (Request::post('robots_follow')) $robots_follow = 'nofollow'; else $robots_follow = 'follow';
+                            $slug = (Request::post('news_slug') == "") ? Request::post('news_title') : Request::post('news_slug');
 
                             if (count($errors) == 0) {
 
                                 $data = array(
-                                    'slug'         => Security::safeName(Request::post('news_slug'), '-', true),
+                                    'slug'         => Security::safeName($slug, '-', true),
                                     'parent'       => $parent,
                                     'title'        => Request::post('news_title'),
                                     'description'  => Request::post('news_description'),
