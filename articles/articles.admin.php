@@ -285,8 +285,8 @@ class ArticlesAdmin extends Backend {
                             $id = (int)Request::post('article_id');
 
                             // Prepare date
-                            if (Valid::date(Request::post('date'))) {
-                                $date = strtotime(Request::post('date'));
+                            if (Valid::date(Request::post('article_date'))) {
+                                $date = strtotime(Request::post('article_date'));
                             } else {
                                 $date = time();
                             }
@@ -418,8 +418,8 @@ class ArticlesAdmin extends Backend {
                                 $_articles = $articles->select('[parent="'.$item['slug'].'"]');
 
                                 if ( ! empty($_articles)) {
-                                    foreach($_articles as $_articles) {
-                                        $articles->updateWhere('[slug="'.$_articles['slug'].'"]', array('parent' => ''));
+                                    foreach($_articles as $article) {
+                                        $articles->updateWhere('[slug="'.$article['slug'].'"]', array('parent' => ''));
                                     }
                                 }
 
@@ -459,16 +459,15 @@ class ArticlesAdmin extends Backend {
             $opt['pages'] = ceil($count_catalog/$limit);
 
             $opt['page'] = (Request::get('page')) ? (int)Request::get('page') : 1;
-//			$sort = (Request::get('sort')) ? (string)Request::get('sort') : 'date';
-//			$order = (Request::get('order') and Request::get('order')=='ASC') ? 'ASC' : 'DESC';
+			$sort = (Request::get('sort')) ? (string)Request::get('sort') : 'date';
+			$order = (Request::get('order') and Request::get('order')=='ASC') ? 'ASC' : 'DESC';
 
             if ($opt['page'] < 1) { $opt['page'] = 1; }
             elseif ($opt['page'] > $opt['pages']) { $opt['page'] = $opt['pages']; }
 
             $start = ($opt['page']-1)*$limit;
 
-//			$records_sort = Arr::subvalSort($records_all, $sort, $order);
-            $records_sort = $records_all;
+			$records_sort = Arr::subvalSort($records_all, $sort, $order);
             if($count_catalog>0) $records = array_slice($records_sort, $start, $limit);
             else $records = array();
 

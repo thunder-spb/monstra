@@ -285,8 +285,8 @@ class NewsAdmin extends Backend {
                             $id = (int)Request::post('news_id');
 
                             // Prepare date
-                            if (Valid::date(Request::post('date'))) {
-                                $date = strtotime(Request::post('date'));
+                            if (Valid::date(Request::post('news_date'))) {
+                                $date = strtotime(Request::post('news_date'));
                             } else {
                                 $date = time();
                             }
@@ -418,8 +418,8 @@ class NewsAdmin extends Backend {
                                 $_news = $news->select('[parent="'.$item['slug'].'"]');
 
                                 if ( ! empty($_news)) {
-                                    foreach($_news as $_news) {
-                                        $news->updateWhere('[slug="'.$_news['slug'].'"]', array('parent' => ''));
+                                    foreach($_news as $news_item) {
+                                        $news->updateWhere('[slug="'.$news_item['slug'].'"]', array('parent' => ''));
                                     }
                                 }
 
