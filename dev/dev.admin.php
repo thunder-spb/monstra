@@ -33,9 +33,11 @@ class DevAdmin extends Backend {
             default :
                 // crop
                 if (($img->width/$img->height) > $ratio) {
-                    $img->resize($width, $height, Image::HEIGHT)->crop($width, $height, round(($img->width-$width)/2),0);
+                    //$img->resize($width, $height, Image::HEIGHT)->crop($width, $height, round(($img->width-$width)/2),0);
+                    $img->resize($width, $height, Image::HEIGHT);
                 } else {
-                    $img->resize($width, $height, Image::WIDTH)->crop($width, $height, 0, 0);
+                    //$img->resize($width, $height, Image::WIDTH)->crop($width, $height, 0, 0);
+                    $img->resize($width, $height, Image::WIDTH);
                 }
                 break;
         }

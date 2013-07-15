@@ -18,22 +18,24 @@
 Plugin::register( __FILE__,
     __('Dev', 'dev'),
     __('Developer Helper plugin for Monstra', 'dev'),
-    '1.4.0',
+    '1.4.1',
     'KANekT',
     'http://kanekt.ru/'
 );
 
     // Load Sandbox Admin for Editor and Admin
 
-    if (Session::exists('user_role') && in_array(Session::get('user_role'), array('admin'))) {
+    if (Session::exists('user_role') && in_array(Session::get('user_role'), array('admin', 'editor'))) {
 
         Plugin::admin('dev');
 
     }
+	
     if (Registry::exists('dev_valid_frontend'))
     {
         Javascript::add('plugins/dev/js/validate.js', 'frontend', 11);
     }
+	
     if (Registry::exists('dev_valid_backend'))
     {
         Javascript::add('plugins/dev/js/validate.js', 'backend', 11);
@@ -44,6 +46,7 @@ Plugin::register( __FILE__,
         Javascript::add('plugins/dev/js/datepicker.js', 'frontend', 11);
         Stylesheet::add('plugins/dev/css/datepicker.css', 'frontend',11);
     }
+	
     if (Registry::exists('dev_date_backend'))
     {
         Javascript::add('plugins/dev/js/datepicker.js', 'backend', 11);
@@ -63,6 +66,7 @@ Plugin::register( __FILE__,
     {
         Stylesheet::add('plugins/dev/css/bootstrap-fileupload.min.css', 'backend',18);
         Javascript::add('plugins/dev/js/bootstrap-fileupload.min.js', 'backend', 18);
+        Javascript::add('plugins/dev/js/bootstrap-fileupload-setting.js', 'backend', 19);
     }
 
     if (Registry::exists('dev_fancy_frontend'))
@@ -73,6 +77,7 @@ Plugin::register( __FILE__,
 
         Javascript::add('plugins/dev/js/script.js', 'frontend', 17);
     }
+	
     if (Registry::exists('dev_fancy_backend'))
     {
         Javascript::add('plugins/dev/js/jquery.fancybox.pack.js', 'backend', 15);
@@ -83,11 +88,12 @@ Plugin::register( __FILE__,
 
     if (Registry::exists('dev_migrate_frontend'))
     {
-        Javascript::add('plugins/dev/js/jquery-migrate-1.1.1.min.js', 'frontend', 5);
+        Javascript::add('plugins/dev/js/jquery-migrate.min.js', 'frontend', 5);
     }
+	
     if (Registry::exists('dev_migrate_backend'))
     {
-        Javascript::add('plugins/dev/js/jquery-migrate-1.1.1.min.js', 'backend', 5);
+        Javascript::add('plugins/dev/js/jquery-migrate.min.js', 'backend', 5);
     }
 
     if (Registry::exists('dev_responsiveslides'))
